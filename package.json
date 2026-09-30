@@ -1,0 +1,31 @@
+{
+  "name": "lostnfound-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lost & Found Campus Monorepo Application",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n \"backend,frontend\" -c \"blue,green\" \"npm run dev --workspace=backend\" \"npm run start --workspace=frontend\"",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run start --workspace=frontend",
+    "start:backend": "npm run start --workspace=backend",
+    "start:frontend": "npm run start --workspace=frontend",
+    "build:frontend": "npm run build --workspace=frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.4"
+  },
+  "keywords": [
+    "lost-and-found",
+    "campus",
+    "expo",
+    "react-native",
+    "express",
+    "supabase",
+    "monorepo"
+  ],
+  "author": "",
+  "license": "ISC"
+}
