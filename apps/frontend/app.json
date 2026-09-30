@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Lost & Found Campus",
+    "name": "Lost N Found",
     "slug": "lostnfound",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -15,14 +15,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.campus.lostnfound"
+      "bundleIdentifier": "com.biru.lostnfound"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0F172A"
       },
-      "package": "com.campus.lostnfound"
+      "package": "com.biru.lostnfound"
     },
     "web": {
       "bundler": "metro",
@@ -30,7 +30,16 @@
       "favicon": "./assets/icon.png"
     },
     "plugins": [
-      "expo-router"
-    ]
+      "expo-router",
+      "expo-asset"
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "b22cb7e4-49f4-4a3d-8f5b-f7379682319c"
+      }
+    }
   }
 }

@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const itemRoutes = require('./itemRoutes');
 
-// Health Check Endpoint
+const authRoutes = require('./auth');
+const itemsRoutes = require('./items');
+const chatRoutes = require('./chat');
+
+// Health Check
 router.get('/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
@@ -11,7 +14,9 @@ router.get('/health', (req, res) => {
   });
 });
 
-// Resource Routes
-router.use('/items', itemRoutes);
+// Mounted Routes
+router.use('/auth', authRoutes);
+router.use('/items', itemsRoutes);
+router.use('/chat', chatRoutes);
 
 module.exports = router;
