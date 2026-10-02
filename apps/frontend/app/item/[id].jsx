@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { api } from '../../services/api';
 import { useAuth } from '../../services/authContext';
 
@@ -30,7 +31,7 @@ export default function ItemDetailScreen() {
         const data = await api.getItemById(id);
         setItem(data);
       } catch (err) {
-        Alert.alert('Error', 'Barang tidak ditemukan atau gagal dimuat.');
+        Alert.alert('Gagal Memuat', 'Data barang tidak ditemukan atau telah dihapus.');
         router.back();
       } finally {
         setLoading(false);
@@ -43,7 +44,7 @@ export default function ItemDetailScreen() {
     if (!isAuthenticated) {
       Alert.alert(
         'Login Diperlukan',
-        'Silakan masuk terlebih dahulu untuk memulai percakapan dengan pelapor.',
+        'Silakan masuk ke akun Anda terlebih dahulu untuk memulai percakapan.',
         [
           { text: 'Batal', style: 'cancel' },
           { text: 'Masuk', onPress: () => router.push('/(auth)/login') },
@@ -60,7 +61,7 @@ export default function ItemDetailScreen() {
       if (room?.id) {
         router.push(`/chat/${room.id}`);
       } else {
-        Alert.alert('Gagal', 'Tidak dapat membuat atau membuka ruang percakapan.');
+        Alert.alert('Gagal', 'Tidak dapat membuka ruang percakapan.');
       }
     } catch (err) {
       Alert.alert('Peringatan', err.message || 'Gagal memulai chat.');
@@ -74,7 +75,10 @@ export default function ItemDetailScreen() {
     try {
       await api.updateItemStatus(item.id, nextStatus, token);
       setItem((prev) => ({ ...prev, status: nextStatus }));
-      Alert.alert('Sukses', `Status barang berhasil diubah menjadi ${nextStatus}.`);
+      Alert.alert(
+        'Status Berhasil Diubah',
+        `Status barang sekarang adalah ${nextStatus === 'resolved' ? 'SELESAI' : 'AKTIF'}.`
+      );
     } catch (err) {
       Alert.alert('Gagal', err.message);
     }
@@ -84,7 +88,7 @@ export default function ItemDetailScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#38BDF8" />
+          <ActivityIndicator size="large" color="#2563EB" />
           <Text style={styles.loadingText}>Memuat detail barang...</Text>
         </View>
       </SafeAreaView>
@@ -103,12 +107,12 @@ export default function ItemDetailScreen() {
       {/* Top Navbar */}
       <View style={styles.navbar}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backText}>‹ Kembali</Text>
+          <Ionicons name="arrow-back" size={22} color="#0F172A" />
         </TouchableOpacity>
         <Text style={styles.navTitle} numberOfLines={1}>
           {item.title}
         </Text>
-        <View style={{ width: 60 }} />
+        <View style={{ width: 36 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -122,7 +126,11 @@ export default function ItemDetailScreen() {
               isLost ? styles.lostPlaceholder : styles.foundPlaceholder,
             ]}
           >
-            <Text style={styles.heroEmoji}>{isLost ? '🔍' : '📦'}</Text>
+            <Ionicons
+              name={isLost ? 'search-outline' : 'cube-outline'}
+              size={54}
+              color={isLost ? '#EF4444' : '#10B981'}
+            />
             <Text style={styles.heroPlaceholderText}>Tidak ada foto terlampir</Text>
           </View>
         )}
@@ -143,7 +151,7 @@ export default function ItemDetailScreen() {
 
             <View style={[styles.statusBadge, isResolved ? styles.resolvedBadge : styles.activeBadge]}>
               <Text style={[styles.statusBadgeText, isResolved ? styles.resolvedText : styles.activeText]}>
-                {isResolved ? '✓ SELESAI' : '● AKTIF'}
+                {isResolved ? 'Selesai' : 'Aktif'}
               </Text>
             </View>
 
@@ -154,28 +162,37 @@ export default function ItemDetailScreen() {
 
           {/* Title */}
           <Text style={styles.title}>{item.title}</Text>
-          <Text style={styles.date}>
-            Dilaporkan pada{' '}
-            {item.created_at
-              ? new Date(item.created_at).toLocaleDateString('id-ID', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })
-              : 'Hari ini'}
-          </Text>
+          <View style={styles.dateRow}>
+            <Ionicons name="calendar-outline" size={13} color="#94A3B8" style={{ marginRight: 4 }} />
+            <Text style={styles.date}>
+              Dilaporkan pada{' '}
+              {item.created_at
+                ? new Date(item.created_at).toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })
+                : 'Hari ini'}
+            </Text>
+          </View>
 
           {/* Location Card */}
           <View style={styles.infoCard}>
-            <Text style={styles.infoLabel}>📍 Lokasi Kejadian / Temuan</Text>
+            <View style={styles.cardHeaderRow}>
+              <Ionicons name="location-outline" size={16} color="#2563EB" style={{ marginRight: 6 }} />
+              <Text style={styles.infoLabel}>Lokasi Kejadian / Temuan</Text>
+            </View>
             <Text style={styles.infoValue}>{item.location}</Text>
           </View>
 
           {/* Description Card */}
           <View style={styles.infoCard}>
-            <Text style={styles.infoLabel}>📝 Deskripsi & Ciri-Ciri</Text>
+            <View style={styles.cardHeaderRow}>
+              <Ionicons name="document-text-outline" size={16} color="#2563EB" style={{ marginRight: 6 }} />
+              <Text style={styles.infoLabel}>Deskripsi & Ciri-Ciri</Text>
+            </View>
             <Text style={styles.descriptionValue}>
-              {item.description || 'Tidak ada keterangan tambahan.'}
+              {item.description || 'Tidak ada deskripsi tambahan yang dicantumkan.'}
             </Text>
           </View>
 
@@ -184,14 +201,14 @@ export default function ItemDetailScreen() {
             <Text style={styles.reporterCardTitle}>Identitas Pelapor</Text>
             <View style={styles.reporterRow}>
               <View style={styles.avatar}>
-                <Text style={styles.avatarEmoji}>👤</Text>
+                <Ionicons name="person" size={22} color="#2563EB" />
               </View>
               <View style={styles.reporterDetails}>
                 <Text style={styles.reporterName}>
                   {reporter.full_name || 'Civitas Kampus'}
                 </Text>
                 <Text style={styles.reporterPhone}>
-                  {item.contact_info || reporter.phone_number || 'Kontak via Chat App'}
+                  {item.contact_info || reporter.phone_number || 'Kontak melalui Pesan Aplikasi'}
                 </Text>
               </View>
             </View>
@@ -209,8 +226,14 @@ export default function ItemDetailScreen() {
             ]}
             onPress={handleToggleStatus}
           >
+            <Ionicons
+              name={isResolved ? 'refresh-outline' : 'checkmark-circle-outline'}
+              size={18}
+              color="#FFFFFF"
+              style={{ marginRight: 6 }}
+            />
             <Text style={styles.actionBtnText}>
-              {isResolved ? '↺ Buka Kembali Laporan' : '✓ Tandai Sudah Selesai / Ditemukan'}
+              {isResolved ? 'Aktifkan Kembali Laporan' : 'Tandai Selesai / Ditemukan'}
             </Text>
           </TouchableOpacity>
         ) : (
@@ -222,7 +245,10 @@ export default function ItemDetailScreen() {
             {startingChat ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-              <Text style={styles.chatBtnText}>💬 Hubungi Pelapor</Text>
+              <View style={styles.btnContent}>
+                <Ionicons name="chatbubbles" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+                <Text style={styles.chatBtnText}>Hubungi Pelapor</Text>
+              </View>
             )}
           </TouchableOpacity>
         )}
@@ -234,7 +260,7 @@ export default function ItemDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#F8FAFC',
   },
   centerContainer: {
     flex: 1,
@@ -242,8 +268,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 12,
-    color: '#94A3B8',
+    marginTop: 10,
+    color: '#64748B',
   },
   navbar: {
     flexDirection: 'row',
@@ -252,168 +278,187 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
-    backgroundColor: '#0F172A',
+    borderBottomColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
   },
   backButton: {
-    paddingVertical: 4,
-    paddingRight: 12,
-  },
-  backText: {
-    color: '#38BDF8',
-    fontSize: 16,
-    fontWeight: '700',
+    padding: 6,
+    borderRadius: 8,
   },
   navTitle: {
-    color: '#F8FAFC',
+    color: '#0F172A',
     fontSize: 16,
     fontWeight: '700',
     flex: 1,
     textAlign: 'center',
+    marginHorizontal: 8,
   },
   scrollContent: {
-    paddingBottom: 100,
+    paddingBottom: 110,
   },
   heroImage: {
     width: '100%',
-    height: 260,
-    backgroundColor: '#0F172A',
+    height: 250,
+    backgroundColor: '#E2E8F0',
   },
   heroPlaceholder: {
     width: '100%',
-    height: 200,
+    height: 180,
     justifyContent: 'center',
     alignItems: 'center',
   },
   lostPlaceholder: {
-    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    backgroundColor: '#FEF2F2',
   },
   foundPlaceholder: {
-    backgroundColor: 'rgba(34, 197, 94, 0.08)',
-  },
-  heroEmoji: {
-    fontSize: 54,
-    marginBottom: 8,
+    backgroundColor: '#ECFDF5',
   },
   heroPlaceholderText: {
-    color: '#64748B',
+    color: '#94A3B8',
     fontSize: 13,
+    marginTop: 8,
+    fontWeight: '500',
   },
   mainInfo: {
-    padding: 20,
+    padding: 16,
   },
   badgeRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   typeBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 6,
+    borderWidth: 1,
   },
   lostBadge: {
-    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+    backgroundColor: '#FEE2E2',
+    borderColor: '#FECACA',
   },
   foundBadge: {
-    backgroundColor: 'rgba(34, 197, 94, 0.2)',
+    backgroundColor: '#DCFCE7',
+    borderColor: '#BBF7D0',
   },
   typeBadgeText: {
     fontSize: 11,
     fontWeight: '800',
+    letterSpacing: 0.3,
   },
   lostBadgeText: {
-    color: '#EF4444',
+    color: '#DC2626',
   },
   foundBadgeText: {
-    color: '#22C55E',
+    color: '#16A34A',
   },
   statusBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 6,
+    borderWidth: 1,
   },
   activeBadge: {
-    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
   },
   activeText: {
-    color: '#38BDF8',
+    color: '#2563EB',
     fontSize: 11,
     fontWeight: '700',
   },
   resolvedBadge: {
-    backgroundColor: 'rgba(148, 163, 184, 0.2)',
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
   },
   resolvedText: {
-    color: '#94A3B8',
+    color: '#065F46',
     fontSize: 11,
     fontWeight: '700',
   },
   categoryBadge: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
   },
   categoryBadgeText: {
-    color: '#CBD5E1',
+    color: '#64748B',
     fontSize: 11,
     fontWeight: '600',
   },
   title: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#F8FAFC',
+    color: '#0F172A',
     lineHeight: 28,
     marginBottom: 6,
   },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   date: {
     fontSize: 12,
-    color: '#64748B',
-    marginBottom: 18,
+    color: '#94A3B8',
   },
   infoCard: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#334155',
-    marginBottom: 14,
+    borderColor: '#E2E8F0',
+    marginBottom: 12,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
   },
   infoLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#94A3B8',
+    color: '#64748B',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 6,
+    letterSpacing: 0.4,
   },
   infoValue: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#F8FAFC',
+    color: '#0F172A',
   },
   descriptionValue: {
     fontSize: 14,
-    color: '#CBD5E1',
+    color: '#334155',
     lineHeight: 22,
   },
   reporterCard: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 2,
   },
   reporterCardTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#94A3B8',
+    color: '#64748B',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
     marginBottom: 10,
   },
   reporterRow: {
@@ -421,18 +466,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatar: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: '#0F172A',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#EFF6FF',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#0284C7',
+    borderColor: '#BFDBFE',
     marginRight: 12,
-  },
-  avatarEmoji: {
-    fontSize: 20,
   },
   reporterDetails: {
     flex: 1,
@@ -440,11 +482,11 @@ const styles = StyleSheet.create({
   reporterName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: '#0F172A',
   },
   reporterPhone: {
     fontSize: 13,
-    color: '#38BDF8',
+    color: '#64748B',
     marginTop: 2,
   },
   bottomBar: {
@@ -452,43 +494,50 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#0F172A',
-    paddingHorizontal: 20,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 24,
     borderTopWidth: 1,
-    borderTopColor: '#1E293B',
+    borderTopColor: '#E2E8F0',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
   },
   actionBtn: {
-    borderRadius: 14,
-    paddingVertical: 15,
+    borderRadius: 12,
+    paddingVertical: 14,
     alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
   },
   chatBtn: {
-    backgroundColor: '#0284C7',
-    shadowColor: '#0284C7',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: '#2563EB',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  btnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   chatBtnText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
   },
   resolveBtn: {
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
-    borderWidth: 1,
-    borderColor: '#22C55E',
+    backgroundColor: '#16A34A',
   },
   reactivateBtn: {
-    backgroundColor: 'rgba(56, 189, 248, 0.15)',
-    borderWidth: 1,
-    borderColor: '#38BDF8',
+    backgroundColor: '#2563EB',
   },
   actionBtnText: {
-    color: '#F8FAFC',
+    color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
   },

@@ -231,17 +231,20 @@ export const api = {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Harap login terlebih dahulu');
 
-      // Check existing
-      const { data: existing } = await supabase
+      // Check existing rooms for this item
+      const { data: existingList } = await supabase
         .from('chat_rooms')
         .select('id, item_id, user1_id, user2_id')
-        .eq('item_id', itemId)
-        .or(
-          `and(user1_id.eq.${user.id},user2_id.eq.${targetUserId}),and(user1_id.eq.${targetUserId},user2_id.eq.${user.id})`
-        )
-        .maybeSingle();
+        .eq('item_id', itemId);
 
-      if (existing) return existing;
+      if (existingList && existingList.length > 0) {
+        const found = existingList.find(
+          (r) =>
+            (r.user1_id === user.id && r.user2_id === targetUserId) ||
+            (r.user1_id === targetUserId && r.user2_id === user.id)
+        );
+        if (found) return found;
+      }
 
       const { data: newRoom, error } = await supabase
         .from('chat_rooms')

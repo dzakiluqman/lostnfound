@@ -6,18 +6,18 @@ import { AuthProvider } from '../services/authContext';
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <Stack
         screenOptions={{
           headerStyle: {
-            backgroundColor: '#0F172A',
+            backgroundColor: '#FFFFFF',
           },
-          headerTintColor: '#F8FAFC',
+          headerTintColor: '#0F172A',
           headerTitleStyle: {
             fontWeight: '700',
           },
           contentStyle: {
-            backgroundColor: '#0F172A',
+            backgroundColor: '#F8FAFC',
           },
         }}
       >
@@ -34,7 +34,6 @@ export default function RootLayout() {
           name="(auth)"
           options={{
             headerShown: false,
-            presentation: 'modal',
           }}
         />
 

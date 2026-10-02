@@ -10,8 +10,10 @@ import {
   ActivityIndicator,
   RefreshControl,
   ScrollView,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { api } from '../../services/api';
 import { ItemCard } from '../../components/ItemCard';
 import { useAuth } from '../../services/authContext';
@@ -20,9 +22,8 @@ const CATEGORIES = ['Semua', 'Elektronik', 'Dokumen / KTM', 'Kunci', 'Pakaian & 
 
 export default function FeedScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
-  // Active Type: 'lost' or 'found'
   const [activeType, setActiveType] = useState('lost');
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,17 +60,34 @@ export default function FeedScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Top Banner & Type Switcher */}
-      <View style={styles.topContainer}>
-        {/* Switcher Tab: Lost vs Found */}
+      {/* Brand Header */}
+      <View style={styles.header}>
+        <View style={styles.brandRow}>
+          <Image
+            source={require('../../assets/images/logo.png')}
+            style={styles.brandLogo}
+            resizeMode="contain"
+          />
+        </View>
+      </View>
+
+      {/* Top Filter Container */}
+      <View style={styles.filterSection}>
+        {/* Type Switcher Tab */}
         <View style={styles.switcherContainer}>
           <TouchableOpacity
             style={[styles.switcherTab, activeType === 'lost' && styles.lostTabActive]}
             activeOpacity={0.8}
             onPress={() => setActiveType('lost')}
           >
-            <Text style={[styles.switcherText, activeType === 'lost' && styles.switcherTextActive]}>
-              🔍 Barang Hilang
+            <Ionicons
+              name="search"
+              size={16}
+              color={activeType === 'lost' ? '#DC2626' : '#64748B'}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={[styles.switcherText, activeType === 'lost' && styles.lostTextActive]}>
+              Barang Hilang
             </Text>
           </TouchableOpacity>
 
@@ -78,26 +96,32 @@ export default function FeedScreen() {
             activeOpacity={0.8}
             onPress={() => setActiveType('found')}
           >
-            <Text style={[styles.switcherText, activeType === 'found' && styles.switcherTextActive]}>
-              📦 Ditemukan
+            <Ionicons
+              name="cube"
+              size={16}
+              color={activeType === 'found' ? '#16A34A' : '#64748B'}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={[styles.switcherText, activeType === 'found' && styles.foundTextActive]}>
+              Ditemukan
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Search Bar */}
+        {/* Search Bar with Input Icon */}
         <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>🔎</Text>
+          <Ionicons name="search-outline" size={18} color="#94A3B8" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder={`Cari ${activeType === 'lost' ? 'barang hilang' : 'barang temuan'}...`}
-            placeholderTextColor="#64748B"
+            placeholderTextColor="#94A3B8"
             value={searchQuery}
             onChangeText={setSearchQuery}
             returnKeyType="search"
           />
           {searchQuery ? (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Text style={styles.clearSearch}>✕</Text>
+            <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Ionicons name="close-circle" size={18} color="#94A3B8" />
             </TouchableOpacity>
           ) : null}
         </View>
@@ -133,8 +157,8 @@ export default function FeedScreen() {
       {/* Item List */}
       {loading && !refreshing ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#38BDF8" />
-          <Text style={styles.loadingText}>Memuat barang...</Text>
+          <ActivityIndicator size="large" color="#2563EB" />
+          <Text style={styles.loadingText}>Memuat daftar barang...</Text>
         </View>
       ) : (
         <FlatList
@@ -151,14 +175,19 @@ export default function FeedScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor="#38BDF8"
+              tintColor="#2563EB"
+              colors={['#2563EB']}
             />
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyEmoji}>
-                {activeType === 'lost' ? '🎉' : '🔎'}
-              </Text>
+              <View style={styles.emptyIconCircle}>
+                <Ionicons
+                  name={activeType === 'lost' ? 'search-outline' : 'cube-outline'}
+                  size={36}
+                  color="#94A3B8"
+                />
+              </View>
               <Text style={styles.emptyTitle}>
                 {activeType === 'lost'
                   ? 'Belum ada laporan barang hilang'
@@ -166,8 +195,8 @@ export default function FeedScreen() {
               </Text>
               <Text style={styles.emptySubtitle}>
                 {searchQuery || selectedCategory !== 'Semua'
-                  ? 'Coba ubah kata kunci pencarian atau kategori'
-                  : 'Ketuk tombol Laporkan di bawah jika Anda kehilangan atau menemukan sesuatu'}
+                  ? 'Coba ganti kata kunci pencarian atau kategori filter.'
+                  : 'Gunakan tab "Laporkan" untuk mendaftarkan barang baru ke komunitas kampus.'}
               </Text>
             </View>
           }
@@ -180,94 +209,125 @@ export default function FeedScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#F8FAFC',
   },
-  topContainer: {
+  header: {
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 6,
+    paddingTop: 8,
+    paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
+    borderBottomColor: '#F1F5F9',
+  },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  brandLogo: {
+    width: 170,
+    height: 40,
+  },
+  filterSection: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
   },
   switcherContainer: {
     flexDirection: 'row',
-    backgroundColor: '#1E293B',
-    borderRadius: 14,
-    padding: 4,
-    marginBottom: 12,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    padding: 3,
+    marginBottom: 10,
   },
   switcherTab: {
     flex: 1,
-    paddingVertical: 10,
+    flexDirection: 'row',
+    paddingVertical: 9,
     alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 10,
   },
   lostTabActive: {
-    backgroundColor: '#DC2626',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
   },
   foundTabActive: {
-    backgroundColor: '#16A34A',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
   },
   switcherText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#94A3B8',
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748B',
   },
-  switcherTextActive: {
-    color: '#FFFFFF',
+  lostTextActive: {
+    color: '#DC2626',
+    fontWeight: '700',
+  },
+  foundTextActive: {
+    color: '#16A34A',
+    fontWeight: '700',
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E293B',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
     marginBottom: 10,
   },
   searchIcon: {
-    fontSize: 16,
     marginRight: 8,
   },
   searchInput: {
     flex: 1,
-    color: '#F8FAFC',
+    color: '#0F172A',
     fontSize: 14,
-  },
-  clearSearch: {
-    color: '#94A3B8',
-    fontSize: 16,
-    paddingHorizontal: 4,
+    padding: 0,
   },
   categoryScroll: {
     gap: 8,
-    paddingBottom: 6,
+    paddingBottom: 4,
   },
   categoryChip: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: '#1E293B',
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
   },
   categoryChipActive: {
-    backgroundColor: '#0284C7',
-    borderColor: '#38BDF8',
+    backgroundColor: '#2563EB',
+    borderColor: '#2563EB',
   },
   categoryChipText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#94A3B8',
+    color: '#64748B',
   },
   categoryChipTextActive: {
     color: '#FFFFFF',
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 10,
+    paddingBottom: 24,
   },
   centerContainer: {
     flex: 1,
@@ -275,9 +335,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 12,
-    color: '#94A3B8',
+    marginTop: 10,
+    color: '#64748B',
     fontSize: 13,
+    fontWeight: '500',
   },
   emptyContainer: {
     alignItems: 'center',
@@ -285,21 +346,28 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
     paddingHorizontal: 24,
   },
-  emptyEmoji: {
-    fontSize: 48,
-    marginBottom: 12,
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   emptyTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: '#0F172A',
     textAlign: 'center',
     marginBottom: 6,
   },
   emptySubtitle: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: '#64748B',
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 19,
   },
 });

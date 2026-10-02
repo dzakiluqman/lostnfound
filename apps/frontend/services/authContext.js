@@ -66,7 +66,6 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setIsLoading(true);
     try {
-      // Direct Supabase Auth login
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -81,7 +80,7 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true };
     } catch (err) {
-      return { success: false, error: err.message || 'Login gagal' };
+      return { success: false, error: err.message || 'Email atau kata sandi tidak cocok' };
     } finally {
       setIsLoading(false);
     }
@@ -90,7 +89,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (email, password, fullName, phoneNumber) => {
     setIsLoading(true);
     try {
-      // 1. Sign up user
+      // 1. Sign up user via Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -104,24 +103,50 @@ export const AuthProvider = ({ children }) => {
 
       if (error) throw error;
 
-      // 2. Ensure profile inserted in table 'profiles'
+      // 2. Ensure profile inserted if user was created
       if (data.user) {
-        await supabase.from('profiles').upsert({
-          id: data.user.id,
-          full_name: fullName,
-          phone_number: phoneNumber || '',
-          updated_at: new Date().toISOString(),
-        });
+        try {
+          await supabase.from('profiles').upsert({
+            id: data.user.id,
+            full_name: fullName,
+            phone_number: phoneNumber || '',
+            updated_at: new Date().toISOString(),
+          });
+        } catch (profileErr) {
+          console.warn('Profile upsert note:', profileErr?.message);
+        }
       }
 
-      setSession(data.session);
-      setUser(data.user);
-      setToken(data.session?.access_token || null);
-      if (data.user) {
-        await fetchProfile(data.user.id);
+      // 3. Check for active session
+      let activeSession = data.session;
+
+      // If no session returned (common with Supabase defaults), try immediate sign in
+      if (!activeSession) {
+        try {
+          const signInRes = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          if (signInRes.data?.session) {
+            activeSession = signInRes.data.session;
+          }
+        } catch (autoLoginErr) {
+          console.log('Immediate login note:', autoLoginErr?.message);
+        }
       }
 
-      return { success: true };
+      if (activeSession) {
+        setSession(activeSession);
+        setUser(activeSession.user);
+        setToken(activeSession.access_token);
+        if (activeSession.user) {
+          await fetchProfile(activeSession.user.id);
+        }
+        return { success: true, autoLogin: true };
+      }
+
+      // If email confirmation is required by Supabase project settings
+      return { success: true, autoLogin: false, requiresLogin: true, email };
     } catch (err) {
       return { success: false, error: err.message || 'Registrasi gagal' };
     } finally {

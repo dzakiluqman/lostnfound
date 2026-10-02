@@ -1,94 +1,95 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Text, View, StyleSheet, Platform } from 'react-native';
-
-function TabIcon({ emoji, label, focused }) {
-  return (
-    <View style={styles.tabItem}>
-      <Text style={[styles.tabEmoji, focused && styles.tabEmojiFocused]}>{emoji}</Text>
-      <Text style={[styles.tabLabel, focused && styles.tabLabelFocused]}>{label}</Text>
-    </View>
-  );
-}
+import { StyleSheet, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
         headerStyle: {
-          backgroundColor: '#0F172A',
+          backgroundColor: '#FFFFFF',
           borderBottomWidth: 1,
-          borderBottomColor: '#1E293B',
+          borderBottomColor: '#E2E8F0',
+          elevation: 0,
+          shadowOpacity: 0,
         },
-        headerTintColor: '#F8FAFC',
+        headerTintColor: '#0F172A',
         headerTitleStyle: {
           fontWeight: '700',
           fontSize: 18,
+          color: '#0F172A',
         },
         tabBarStyle: {
-          backgroundColor: '#0F172A',
-          borderTopColor: '#1E293B',
+          backgroundColor: '#FFFFFF',
+          borderTopColor: '#E2E8F0',
           borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 88 : 68,
+          height: Platform.OS === 'ios' ? 88 : 64,
           paddingBottom: Platform.OS === 'ios' ? 24 : 10,
           paddingTop: 8,
+          elevation: 4,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.04,
+          shadowRadius: 6,
         },
-        tabBarShowLabel: false,
+        tabBarActiveTintColor: '#2563EB',
+        tabBarInactiveTintColor: '#94A3B8',
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+          marginTop: 2,
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Beranda',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" label="Beranda" focused={focused} />,
+          tabBarLabel: 'Beranda',
+          tabBarIcon: ({ color, focused, size }) => (
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={size || 22} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="add-item"
         options={{
           title: 'Laporkan Barang',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="➕" label="Laporkan" focused={focused} />,
+          tabBarLabel: 'Laporkan',
+          tabBarIcon: ({ color, focused, size }) => (
+            <Ionicons
+              name={focused ? 'add-circle' : 'add-circle-outline'}
+              size={size || 24}
+              color={color}
+            />
+          ),
         }}
       />
       <Tabs.Screen
         name="chats"
         options={{
           title: 'Percakapan',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="💬" label="Pesan" focused={focused} />,
+          tabBarLabel: 'Pesan',
+          tabBarIcon: ({ color, focused, size }) => (
+            <Ionicons
+              name={focused ? 'chatbubbles' : 'chatbubbles-outline'}
+              size={size || 22}
+              color={color}
+            />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Akun Saya',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="👤" label="Profil" focused={focused} />,
+          tabBarLabel: 'Profil',
+          tabBarIcon: ({ color, focused, size }) => (
+            <Ionicons name={focused ? 'person' : 'person-outline'} size={size || 22} color={color} />
+          ),
         }}
       />
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  tabItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabEmoji: {
-    fontSize: 20,
-    opacity: 0.6,
-  },
-  tabEmojiFocused: {
-    opacity: 1,
-    transform: [{ scale: 1.1 }],
-  },
-  tabLabel: {
-    fontSize: 10,
-    marginTop: 3,
-    color: '#64748B',
-    fontWeight: '500',
-  },
-  tabLabelFocused: {
-    color: '#38BDF8',
-    fontWeight: '700',
-  },
-});

@@ -10,22 +10,26 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
+  Image,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../services/authContext';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const { login, isLoading } = useAuth();
 
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(params.email ? String(params.email) : '');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [successNotice, setSuccessNotice] = useState(params.registered ? 'Registrasi berhasil! Silakan masuk dengan akun Anda.' : '');
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      setErrorMessage('Harap masukkan email dan password.');
+      setErrorMessage('Harap masukkan email dan kata sandi Anda.');
       return;
     }
 
@@ -35,66 +39,102 @@ export default function LoginScreen() {
     if (res.success) {
       router.replace('/(tabs)');
     } else {
-      setErrorMessage(res.error || 'Login gagal, periksa email & password.');
+      setErrorMessage(res.error || 'Email atau kata sandi tidak cocok.');
     }
   };
 
   const handleQuickDemo = () => {
     setEmail('mahasiswa@campus.ac.id');
     setPassword('campus123456');
+    setErrorMessage('');
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Header */}
+          {/* Brand Header */}
           <View style={styles.header}>
-            <View style={styles.iconCircle}>
-              <Text style={styles.iconEmoji}>🔍</Text>
-            </View>
+            <Image
+              source={require('../../assets/images/icon.png')}
+              style={styles.logoIcon}
+              resizeMode="contain"
+            />
             <Text style={styles.title}>Selamat Datang</Text>
             <Text style={styles.subtitle}>
-              Masuk ke akun Lost & Found Kampus Anda untuk mencari dan melaporkan barang.
+              Masuk ke akun Lost & Found Kampus untuk mencari atau melaporkan barang.
             </Text>
           </View>
 
-          {/* Form */}
-          <View style={styles.form}>
-            {errorMessage ? (
-              <View style={styles.errorBanner}>
-                <Text style={styles.errorText}>⚠️ {errorMessage}</Text>
+          {/* Form Card */}
+          <View style={styles.formCard}>
+            {successNotice ? (
+              <View style={styles.successBanner}>
+                <Ionicons name="checkmark-circle" size={18} color="#059669" style={{ marginRight: 8 }} />
+                <Text style={styles.successText}>{successNotice}</Text>
               </View>
             ) : null}
 
+            {errorMessage ? (
+              <View style={styles.errorBanner}>
+                <Ionicons name="alert-circle" size={18} color="#DC2626" style={{ marginRight: 8 }} />
+                <Text style={styles.errorText}>{errorMessage}</Text>
+              </View>
+            ) : null}
+
+            {/* Email Field */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email Kampus / Pribadi</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="nama@campus.ac.id"
-                placeholderTextColor="#64748B"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={email}
-                onChangeText={setEmail}
-              />
+              <View style={styles.inputWrapper}>
+                <Ionicons name="mail-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="nama@campus.ac.id"
+                  placeholderTextColor="#94A3B8"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={email}
+                  onChangeText={(val) => {
+                    setEmail(val);
+                    if (errorMessage) setErrorMessage('');
+                  }}
+                />
+              </View>
             </View>
 
+            {/* Password Field */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Kata Sandi</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="••••••••"
-                placeholderTextColor="#64748B"
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-              />
+              <View style={styles.inputWrapper}>
+                <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Masukkan kata sandi"
+                  placeholderTextColor="#94A3B8"
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={(val) => {
+                    setPassword(val);
+                    if (errorMessage) setErrorMessage('');
+                  }}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={20}
+                    color="#94A3B8"
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
 
+            {/* Submit Button */}
             <TouchableOpacity
               style={[styles.primaryButton, isLoading && styles.buttonDisabled]}
               activeOpacity={0.8}
@@ -102,18 +142,20 @@ export default function LoginScreen() {
               disabled={isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator color="#FFFFFF" />
+                <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
-                <Text style={styles.primaryButtonText}>Masuk</Text>
+                <Text style={styles.primaryButtonText}>Masuk ke Akun</Text>
               )}
             </TouchableOpacity>
 
+            {/* Quick Demo Autofill */}
             <TouchableOpacity
               style={styles.demoButton}
               activeOpacity={0.7}
               onPress={handleQuickDemo}
             >
-              <Text style={styles.demoButtonText}>⚡ Isi Otomatis Akun Demo</Text>
+              <Ionicons name="flash-outline" size={16} color="#2563EB" style={{ marginRight: 6 }} />
+              <Text style={styles.demoButtonText}>Isi Otomatis Akun Demo</Text>
             </TouchableOpacity>
 
             {/* Footer */}
@@ -128,7 +170,7 @@ export default function LoginScreen() {
               style={styles.guestButton}
               onPress={() => router.replace('/(tabs)')}
             >
-              <Text style={styles.guestButtonText}>Lanjutkan sebagai Tamu →</Text>
+              <Text style={styles.guestButtonText}>Lanjutkan sebagai Tamu</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -140,140 +182,170 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#F8FAFC',
   },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingVertical: 40,
+    paddingHorizontal: 20,
+    paddingVertical: 36,
     justifyContent: 'center',
     minHeight: '100%',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 28,
   },
-  iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#1E293B',
-    alignItems: 'center',
-    justifyContent: 'center',
+  logoIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 18,
     marginBottom: 16,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#334155',
-  },
-  iconEmoji: {
-    fontSize: 28,
+    borderColor: '#E2E8F0',
   },
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '800',
-    color: '#F8FAFC',
-    marginBottom: 8,
+    color: '#0F172A',
+    marginBottom: 6,
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: '#64748B',
     textAlign: 'center',
-    lineHeight: 21,
-    paddingHorizontal: 12,
+    lineHeight: 20,
+    paddingHorizontal: 16,
   },
-  form: {
-    backgroundColor: '#1E293B',
-    borderRadius: 20,
+  formCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  errorBanner: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+  successBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
     padding: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#EF4444',
+    borderColor: '#A7F3D0',
+    marginBottom: 16,
+  },
+  successText: {
+    color: '#065F46',
+    fontSize: 13,
+    fontWeight: '500',
+    flex: 1,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#FECACA',
     marginBottom: 16,
   },
   errorText: {
-    color: '#FCA5A5',
+    color: '#B91C1C',
     fontSize: 13,
-    lineHeight: 18,
+    fontWeight: '500',
+    flex: 1,
   },
   inputGroup: {
-    marginBottom: 18,
+    marginBottom: 16,
   },
   label: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#E2E8F0',
-    marginBottom: 8,
+    color: '#334155',
+    marginBottom: 6,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+  },
+  inputIcon: {
+    marginRight: 10,
   },
   input: {
-    backgroundColor: '#0F172A',
-    borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: '#F8FAFC',
-    fontSize: 15,
+    flex: 1,
+    paddingVertical: 13,
+    color: '#0F172A',
+    fontSize: 14,
   },
   primaryButton: {
-    backgroundColor: '#0284C7',
+    backgroundColor: '#2563EB',
     borderRadius: 12,
-    paddingVertical: 15,
+    paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 6,
-    shadowColor: '#0284C7',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    marginTop: 4,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
   buttonDisabled: {
-    opacity: 0.6,
+    opacity: 0.7,
   },
   primaryButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
   },
   demoButton: {
+    flexDirection: 'row',
     marginTop: 12,
-    paddingVertical: 10,
+    paddingVertical: 11,
     alignItems: 'center',
-    backgroundColor: 'rgba(56, 189, 248, 0.08)',
-    borderRadius: 10,
+    justifyContent: 'center',
+    backgroundColor: '#EFF6FF',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.3)',
+    borderColor: '#DBEAFE',
   },
   demoButtonText: {
-    color: '#38BDF8',
+    color: '#2563EB',
     fontSize: 13,
     fontWeight: '600',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 20,
+    marginTop: 22,
     alignItems: 'center',
   },
   footerText: {
-    color: '#94A3B8',
-    fontSize: 14,
+    color: '#64748B',
+    fontSize: 13,
   },
   linkText: {
-    color: '#38BDF8',
-    fontSize: 14,
+    color: '#2563EB',
+    fontSize: 13,
     fontWeight: '700',
   },
   guestButton: {
-    marginTop: 18,
+    marginTop: 16,
     alignItems: 'center',
   },
   guestButtonText: {
-    color: '#64748B',
+    color: '#94A3B8',
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '500',
   },
 });

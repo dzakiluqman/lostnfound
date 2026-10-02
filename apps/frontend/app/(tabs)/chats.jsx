@@ -11,6 +11,7 @@ import {
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../services/authContext';
 import { api } from '../../services/api';
 
@@ -54,10 +55,12 @@ export default function ChatsListScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyEmoji}>💬</Text>
-          <Text style={styles.emptyTitle}>Masuk untuk Melihat Chat</Text>
+          <View style={styles.iconCircle}>
+            <Ionicons name="chatbubbles-outline" size={36} color="#2563EB" />
+          </View>
+          <Text style={styles.emptyTitle}>Masuk untuk Melihat Percakapan</Text>
           <Text style={styles.emptySubtitle}>
-            Riwayat obrolan dengan pemilik barang atau penemu akan tampil di sini setelah Anda login.
+            Riwayat chat dengan penemu atau pemilik barang akan muncul di sini setelah Anda masuk ke akun.
           </Text>
           <TouchableOpacity
             style={styles.loginButton}
@@ -74,7 +77,7 @@ export default function ChatsListScreen() {
     <SafeAreaView style={styles.container}>
       {loading && !refreshing ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#38BDF8" />
+          <ActivityIndicator size="large" color="#2563EB" />
           <Text style={styles.loadingText}>Memuat percakapan...</Text>
         </View>
       ) : (
@@ -85,7 +88,8 @@ export default function ChatsListScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor="#38BDF8"
+              tintColor="#2563EB"
+              colors={['#2563EB']}
             />
           }
           contentContainerStyle={styles.listContent}
@@ -105,9 +109,11 @@ export default function ChatsListScreen() {
                   <Image source={{ uri: relatedItem.image_url }} style={styles.itemThumb} />
                 ) : (
                   <View style={styles.itemThumbPlaceholder}>
-                    <Text style={styles.thumbEmoji}>
-                      {relatedItem.type === 'lost' ? '🔍' : '📦'}
-                    </Text>
+                    <Ionicons
+                      name={relatedItem.type === 'lost' ? 'search-outline' : 'cube-outline'}
+                      size={22}
+                      color="#2563EB"
+                    />
                   </View>
                 )}
 
@@ -126,23 +132,30 @@ export default function ChatsListScreen() {
                     </Text>
                   </View>
 
-                  <Text style={styles.itemTitle} numberOfLines={1}>
-                    Barang: {relatedItem.title || 'Barang Terkait'}
-                  </Text>
+                  <View style={styles.itemBadgeRow}>
+                    <Text style={styles.itemLabel}>Barang:</Text>
+                    <Text style={styles.itemTitle} numberOfLines={1}>
+                      {relatedItem.title || 'Barang Terkait'}
+                    </Text>
+                  </View>
 
                   <Text style={styles.lastMsgText} numberOfLines={1}>
                     {lastMessage ? lastMessage.message : 'Ketuk untuk membuka percakapan...'}
                   </Text>
                 </View>
+
+                <Ionicons name="chevron-forward" size={18} color="#CBD5E1" style={{ marginLeft: 6 }} />
               </TouchableOpacity>
             );
           }}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyEmoji}>📬</Text>
+              <View style={styles.iconCircle}>
+                <Ionicons name="chatbubble-ellipses-outline" size={36} color="#94A3B8" />
+              </View>
               <Text style={styles.emptyTitle}>Belum Ada Percakapan</Text>
               <Text style={styles.emptySubtitle}>
-                Buka salah satu postingan barang dan ketuk tombol "Hubungi Pelapor" untuk memulai chat.
+                Buka postingan barang yang Anda cari dan ketuk "Hubungi Pelapor" untuk memulai koordinasi penyerahan barang.
               </Text>
             </View>
           }
@@ -155,10 +168,11 @@ export default function ChatsListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#F8FAFC',
   },
   listContent: {
     padding: 16,
+    paddingBottom: 24,
   },
   centerContainer: {
     flex: 1,
@@ -166,38 +180,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 12,
-    color: '#94A3B8',
+    marginTop: 10,
+    color: '#64748B',
     fontSize: 13,
   },
   roomCard: {
     flexDirection: 'row',
-    backgroundColor: '#1E293B',
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
     alignItems: 'center',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 2,
   },
   itemThumb: {
-    width: 54,
-    height: 54,
-    borderRadius: 12,
-    backgroundColor: '#0F172A',
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    backgroundColor: '#F1F5F9',
   },
   itemThumbPlaceholder: {
-    width: 54,
-    height: 54,
-    borderRadius: 12,
-    backgroundColor: '#0F172A',
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    backgroundColor: '#EFF6FF',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
-  },
-  thumbEmoji: {
-    fontSize: 22,
+    borderColor: '#DBEAFE',
   },
   roomContent: {
     flex: 1,
@@ -212,53 +228,69 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: '#0F172A',
     flex: 1,
     marginRight: 8,
   },
   timestamp: {
     fontSize: 11,
+    color: '#94A3B8',
+  },
+  itemBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  itemLabel: {
+    fontSize: 12,
     color: '#64748B',
+    marginRight: 4,
   },
   itemTitle: {
     fontSize: 12,
-    color: '#38BDF8',
+    color: '#2563EB',
     fontWeight: '600',
-    marginBottom: 4,
+    flex: 1,
   },
   lastMsgText: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: '#64748B',
   },
   emptyContainer: {
-    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 70,
+    paddingHorizontal: 24,
+  },
+  iconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 32,
-    marginTop: 60,
-  },
-  emptyEmoji: {
-    fontSize: 48,
-    marginBottom: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: '#0F172A',
     marginBottom: 6,
     textAlign: 'center',
   },
   emptySubtitle: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: '#64748B',
     textAlign: 'center',
     lineHeight: 19,
     marginBottom: 20,
   },
   loginButton: {
-    backgroundColor: '#0284C7',
+    backgroundColor: '#2563EB',
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: 11,
     borderRadius: 10,
   },
   loginButtonText: {

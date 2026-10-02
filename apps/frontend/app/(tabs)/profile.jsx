@@ -6,12 +6,13 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ScrollView,
-  FlatList,
   Alert,
   ActivityIndicator,
   RefreshControl,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../services/authContext';
 import { api } from '../../services/api';
 import { ItemCard } from '../../components/ItemCard';
@@ -58,17 +59,17 @@ export default function ProfileScreen() {
 
     Alert.alert(
       actionLabel,
-      `Ubah status "${item.title}" menjadi ${nextStatus.toUpperCase()}?`,
+      `Ubah status "${item.title}" menjadi ${nextStatus === 'resolved' ? 'SELESAI' : 'AKTIF'}?`,
       [
         { text: 'Batal', style: 'cancel' },
         {
-          text: 'Ubah',
+          text: 'Konfirmasi',
           onPress: async () => {
             try {
               await api.updateItemStatus(item.id, nextStatus, token);
               fetchMyItems();
             } catch (err) {
-              Alert.alert('Gagal', err.message || 'Gagal mengubah status');
+              Alert.alert('Gagal', err.message || 'Gagal mengubah status barang.');
             }
           },
         },
@@ -78,7 +79,7 @@ export default function ProfileScreen() {
 
   const handleDeleteItem = (item) => {
     Alert.alert(
-      'Hapus Postingan',
+      'Hapus Laporan',
       `Apakah Anda yakin ingin menghapus "${item.title}"?`,
       [
         { text: 'Batal', style: 'cancel' },
@@ -90,7 +91,7 @@ export default function ProfileScreen() {
               await api.deleteItem(item.id, token);
               fetchMyItems();
             } catch (err) {
-              Alert.alert('Gagal', err.message || 'Gagal menghapus postingan');
+              Alert.alert('Gagal', err.message || 'Gagal menghapus postingan.');
             }
           },
         },
@@ -99,7 +100,7 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert('Konfirmasi Logout', 'Apakah Anda yakin ingin keluar dari akun?', [
+    Alert.alert('Konfirmasi Keluar', 'Apakah Anda yakin ingin keluar dari akun?', [
       { text: 'Batal', style: 'cancel' },
       {
         text: 'Keluar',
@@ -116,10 +117,12 @@ export default function ProfileScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.authPromptContainer}>
-          <Text style={styles.promptEmoji}>👤</Text>
-          <Text style={styles.promptTitle}>Profil Akun</Text>
+          <View style={styles.authIconCircle}>
+            <Ionicons name="person-outline" size={40} color="#2563EB" />
+          </View>
+          <Text style={styles.promptTitle}>Profil Pengguna</Text>
           <Text style={styles.promptSubtitle}>
-            Masuk untuk mengelola laporan barang Anda dan berpartisipasi dalam komunitas kampus.
+            Masuk untuk memantau status laporan Anda, mengelola barang hilang, dan berkoordinasi via chat.
           </Text>
           <TouchableOpacity
             style={styles.loginBtn}
@@ -143,19 +146,23 @@ export default function ProfileScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#38BDF8"
+            tintColor="#2563EB"
+            colors={['#2563EB']}
           />
         }
       >
-        {/* User Card */}
+        {/* User Profile Card */}
         <View style={styles.profileCard}>
           <View style={styles.avatarCircle}>
-            <Text style={styles.avatarEmoji}>🎓</Text>
+            <Ionicons name="person" size={34} color="#2563EB" />
           </View>
           <Text style={styles.userName}>{profile?.full_name || 'Civitas Akademika'}</Text>
           <Text style={styles.userEmail}>{user?.email}</Text>
           {profile?.phone_number ? (
-            <Text style={styles.userPhone}>📞 {profile.phone_number}</Text>
+            <View style={styles.phoneRow}>
+              <Ionicons name="call-outline" size={13} color="#64748B" style={{ marginRight: 4 }} />
+              <Text style={styles.userPhone}>{profile.phone_number}</Text>
+            </View>
           ) : null}
 
           {/* Stats Bar */}
@@ -166,29 +173,31 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statBox}>
-              <Text style={[styles.statValue, { color: '#38BDF8' }]}>{activeCount}</Text>
+              <Text style={[styles.statValue, { color: '#2563EB' }]}>{activeCount}</Text>
               <Text style={styles.statLabel}>Aktif</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statBox}>
-              <Text style={[styles.statValue, { color: '#22C55E' }]}>{resolvedCount}</Text>
+              <Text style={[styles.statValue, { color: '#16A34A' }]}>{resolvedCount}</Text>
               <Text style={styles.statLabel}>Selesai</Text>
             </View>
           </View>
         </View>
 
-        {/* Section: My Posts */}
+        {/* Section: My Posts Header */}
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.sectionTitle}>Laporan Saya ({myItems.length})</Text>
-          <TouchableOpacity onPress={onRefresh}>
-            <Text style={styles.refreshAction}>Perbarui ↻</Text>
+          <TouchableOpacity onPress={onRefresh} style={styles.refreshBtn}>
+            <Ionicons name="sync-outline" size={14} color="#2563EB" style={{ marginRight: 4 }} />
+            <Text style={styles.refreshAction}>Perbarui</Text>
           </TouchableOpacity>
         </View>
 
         {loadingItems && !refreshing ? (
-          <ActivityIndicator color="#38BDF8" style={{ marginVertical: 20 }} />
+          <ActivityIndicator color="#2563EB" style={{ marginVertical: 20 }} />
         ) : myItems.length === 0 ? (
           <View style={styles.emptyPostsBox}>
+            <Ionicons name="document-text-outline" size={32} color="#94A3B8" style={{ marginBottom: 8 }} />
             <Text style={styles.emptyPostsText}>Anda belum membuat laporan barang.</Text>
             <TouchableOpacity
               style={styles.addPostBtn}
@@ -209,8 +218,19 @@ export default function ProfileScreen() {
                   ]}
                   onPress={() => handleToggleStatus(item)}
                 >
-                  <Text style={styles.actionBtnText}>
-                    {item.status === 'active' ? '✓ Tandai Selesai' : '↺ Aktifkan Lagi'}
+                  <Ionicons
+                    name={item.status === 'active' ? 'checkmark-circle-outline' : 'refresh-outline'}
+                    size={14}
+                    color={item.status === 'active' ? '#16A34A' : '#2563EB'}
+                    style={{ marginRight: 4 }}
+                  />
+                  <Text
+                    style={[
+                      styles.actionBtnText,
+                      item.status === 'active' ? styles.resolveBtnText : styles.reactivateBtnText,
+                    ]}
+                  >
+                    {item.status === 'active' ? 'Tandai Selesai' : 'Buka Kembali'}
                   </Text>
                 </TouchableOpacity>
 
@@ -218,7 +238,8 @@ export default function ProfileScreen() {
                   style={[styles.actionBtn, styles.deleteBtn]}
                   onPress={() => handleDeleteItem(item)}
                 >
-                  <Text style={[styles.actionBtnText, styles.deleteBtnText]}>🗑️ Hapus</Text>
+                  <Ionicons name="trash-outline" size={14} color="#DC2626" style={{ marginRight: 4 }} />
+                  <Text style={[styles.actionBtnText, styles.deleteBtnText]}>Hapus</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -231,8 +252,15 @@ export default function ProfileScreen() {
           activeOpacity={0.8}
           onPress={handleLogout}
         >
-          <Text style={styles.logoutButtonText}>🚪 Keluar dari Akun</Text>
+          <Ionicons name="log-out-outline" size={18} color="#DC2626" style={{ marginRight: 8 }} />
+          <Text style={styles.logoutButtonText}>Keluar dari Akun</Text>
         </TouchableOpacity>
+
+        {/* App Version Info */}
+        <View style={styles.appInfoContainer}>
+          <Text style={styles.appInfoText}>Lost & Found Campus v1.0.0</Text>
+          <Text style={styles.appInfoSubtext}>Universitas & Jaringan Kampus</Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -241,7 +269,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#F8FAFC',
   },
   scrollContent: {
     padding: 16,
@@ -253,28 +281,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 32,
   },
-  promptEmoji: {
-    fontSize: 50,
+  authIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#EFF6FF',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
   },
   promptTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#F8FAFC',
+    color: '#0F172A',
     marginBottom: 8,
   },
   promptSubtitle: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: '#64748B',
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 24,
   },
   loginBtn: {
-    backgroundColor: '#0284C7',
+    backgroundColor: '#2563EB',
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 10,
   },
   loginBtnText: {
     color: '#FFFFFF',
@@ -282,50 +317,56 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   profileCard: {
-    backgroundColor: '#1E293B',
-    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     padding: 20,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
-    marginBottom: 24,
+    borderColor: '#E2E8F0',
+    marginBottom: 20,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   avatarCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#0F172A',
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#EFF6FF',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#0284C7',
+    borderColor: '#BFDBFE',
     marginBottom: 12,
   },
-  avatarEmoji: {
-    fontSize: 32,
-  },
   userName: {
-    fontSize: 19,
+    fontSize: 18,
     fontWeight: '800',
-    color: '#F8FAFC',
-    marginBottom: 4,
+    color: '#0F172A',
+    marginBottom: 3,
   },
   userEmail: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: '#64748B',
     marginBottom: 4,
+  },
+  phoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
   },
   userPhone: {
     fontSize: 13,
-    color: '#38BDF8',
-    marginBottom: 12,
+    color: '#64748B',
   },
   statsRow: {
     flexDirection: 'row',
-    marginTop: 16,
-    paddingTop: 16,
+    marginTop: 14,
+    paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: '#334155',
+    borderTopColor: '#F1F5F9',
     width: '100%',
     justifyContent: 'space-around',
   },
@@ -335,50 +376,55 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#F8FAFC',
+    color: '#0F172A',
   },
   statLabel: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: '#64748B',
     marginTop: 2,
   },
   statDivider: {
     width: 1,
     height: '80%',
-    backgroundColor: '#334155',
+    backgroundColor: '#E2E8F0',
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
+    paddingHorizontal: 2,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: '#0F172A',
+  },
+  refreshBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   refreshAction: {
-    color: '#38BDF8',
+    color: '#2563EB',
     fontSize: 13,
     fontWeight: '600',
   },
   emptyPostsBox: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
     marginBottom: 20,
   },
   emptyPostsText: {
-    color: '#94A3B8',
+    color: '#64748B',
     fontSize: 13,
     marginBottom: 12,
   },
   addPostBtn: {
-    backgroundColor: '#0284C7',
+    backgroundColor: '#2563EB',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
@@ -389,57 +435,81 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   myPostWrapper: {
-    marginBottom: 12,
+    marginBottom: 10,
   },
   postActionsRow: {
     flexDirection: 'row',
     gap: 8,
-    marginTop: -2,
+    marginTop: 2,
     marginBottom: 8,
-    paddingHorizontal: 4,
+    paddingHorizontal: 2,
   },
   actionBtn: {
     flex: 1,
+    flexDirection: 'row',
     paddingVertical: 8,
     borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   resolveBtn: {
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+    backgroundColor: '#ECFDF5',
     borderWidth: 1,
-    borderColor: '#22C55E',
+    borderColor: '#A7F3D0',
+  },
+  resolveBtnText: {
+    color: '#065F46',
   },
   reactivateBtn: {
-    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    backgroundColor: '#EFF6FF',
     borderWidth: 1,
-    borderColor: '#38BDF8',
+    borderColor: '#BFDBFE',
+  },
+  reactivateBtnText: {
+    color: '#1E40AF',
   },
   deleteBtn: {
     flex: 0.6,
-    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    backgroundColor: '#FEF2F2',
     borderWidth: 1,
-    borderColor: '#EF4444',
+    borderColor: '#FECACA',
+  },
+  deleteBtnText: {
+    color: '#DC2626',
   },
   actionBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#F8FAFC',
-  },
-  deleteBtnText: {
-    color: '#EF4444',
   },
   logoutButton: {
-    marginTop: 20,
-    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    flexDirection: 'row',
+    marginTop: 14,
+    backgroundColor: '#FEF2F2',
     borderWidth: 1,
-    borderColor: '#EF4444',
-    borderRadius: 14,
+    borderColor: '#FECACA',
+    borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   logoutButtonText: {
-    color: '#EF4444',
+    color: '#DC2626',
     fontSize: 14,
     fontWeight: '700',
+  },
+  appInfoContainer: {
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 12,
+  },
+  appInfoText: {
+    fontSize: 12,
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  appInfoSubtext: {
+    fontSize: 11,
+    color: '#CBD5E1',
+    marginTop: 2,
   },
 });

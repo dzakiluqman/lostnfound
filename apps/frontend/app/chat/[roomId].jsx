@@ -13,6 +13,7 @@ import {
   Image,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../services/supabase';
 import { api } from '../../services/api';
 import { useAuth } from '../../services/authContext';
@@ -52,11 +53,10 @@ export default function ChatRoomScreen() {
     }
   }, [roomId, loadMessages]);
 
-  // 2. Real-time Subscription via Supabase
+  // 2. Real-time Subscription via Supabase Channel
   useEffect(() => {
     if (!roomId) return;
 
-    // Listen for new messages inserted in this room
     const channel = supabase
       .channel(`chat_room:${roomId}`)
       .on(
@@ -70,14 +70,12 @@ export default function ChatRoomScreen() {
         async (payload) => {
           const newMsg = payload.new;
 
-          // If message already exists in state (e.g. from local optimistic insert), avoid duplicate
           setMessages((prev) => {
             const exists = prev.some((m) => m.id === newMsg.id);
             if (exists) return prev;
             return [...prev, newMsg];
           });
 
-          // Scroll to latest message
           setTimeout(() => {
             flatListRef.current?.scrollToEnd({ animated: true });
           }, 100);
@@ -100,7 +98,6 @@ export default function ChatRoomScreen() {
 
     try {
       const sentMsg = await api.sendMessage(roomId, text, token);
-      // Append if not yet present
       setMessages((prev) => {
         const exists = prev.some((m) => m.id === sentMsg?.id);
         if (exists) return prev;
@@ -112,7 +109,6 @@ export default function ChatRoomScreen() {
       }, 100);
     } catch (err) {
       console.error('Failed to send message:', err);
-      // Revert text if failed
       setInputText(text);
     } finally {
       setSending(false);
@@ -124,17 +120,21 @@ export default function ChatRoomScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Chat Room Top Bar */}
+      {/* Top Navbar */}
       <View style={styles.topBar}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backBtnText}>‹</Text>
+          <Ionicons name="arrow-back" size={22} color="#0F172A" />
         </TouchableOpacity>
 
         {relatedItem.image_url ? (
           <Image source={{ uri: relatedItem.image_url }} style={styles.itemThumb} />
         ) : (
           <View style={styles.itemThumbPlaceholder}>
-            <Text style={{ fontSize: 16 }}>{relatedItem.type === 'lost' ? '🔍' : '📦'}</Text>
+            <Ionicons
+              name={relatedItem.type === 'lost' ? 'search-outline' : 'cube-outline'}
+              size={18}
+              color="#2563EB"
+            />
           </View>
         )}
 
@@ -143,7 +143,7 @@ export default function ChatRoomScreen() {
             {otherUser.full_name || 'Lawan Bicara'}
           </Text>
           <Text style={styles.headerItemTitle} numberOfLines={1}>
-            {relatedItem.title || 'Barang Kampus'}
+            {relatedItem.title || 'Barang Terkait'}
           </Text>
         </View>
 
@@ -152,6 +152,7 @@ export default function ChatRoomScreen() {
             style={styles.viewItemBtn}
             onPress={() => router.push(`/item/${relatedItem.id}`)}
           >
+            <Ionicons name="open-outline" size={14} color="#2563EB" style={{ marginRight: 4 }} />
             <Text style={styles.viewItemText}>Lihat</Text>
           </TouchableOpacity>
         ) : null}
@@ -164,8 +165,8 @@ export default function ChatRoomScreen() {
       >
         {loading ? (
           <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color="#38BDF8" />
-            <Text style={styles.loadingText}>Memuat percakapan...</Text>
+            <ActivityIndicator size="large" color="#2563EB" />
+            <Text style={styles.loadingText}>Memuat pesan...</Text>
           </View>
         ) : (
           <FlatList
@@ -217,10 +218,12 @@ export default function ChatRoomScreen() {
             }}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyEmoji}>👋</Text>
+                <View style={styles.emptyIconCircle}>
+                  <Ionicons name="chatbubbles-outline" size={32} color="#94A3B8" />
+                </View>
                 <Text style={styles.emptyTitle}>Mulai Percakapan</Text>
                 <Text style={styles.emptySubtitle}>
-                  Tanyakan detail atau atur janji temu untuk serah terima barang di lingkungan kampus.
+                  Kirim pesan untuk berkoordinasi mengenai lokasi dan waktu serah terima barang.
                 </Text>
               </View>
             }
@@ -231,8 +234,8 @@ export default function ChatRoomScreen() {
         <View style={styles.inputBar}>
           <TextInput
             style={styles.textInput}
-            placeholder="Ketik pesan..."
-            placeholderTextColor="#64748B"
+            placeholder="Tulis pesan..."
+            placeholderTextColor="#94A3B8"
             value={inputText}
             onChangeText={setInputText}
             multiline
@@ -249,7 +252,7 @@ export default function ChatRoomScreen() {
             {sending ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-              <Text style={styles.sendButtonText}>➤</Text>
+              <Ionicons name="send" size={16} color="#FFFFFF" />
             )}
           </TouchableOpacity>
         </View>
@@ -261,44 +264,39 @@ export default function ChatRoomScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#F8FAFC',
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
+    borderBottomColor: '#E2E8F0',
   },
   backBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    padding: 6,
     marginRight: 4,
-  },
-  backBtnText: {
-    color: '#38BDF8',
-    fontSize: 26,
-    fontWeight: '700',
-    lineHeight: 28,
+    borderRadius: 8,
   },
   itemThumb: {
     width: 38,
     height: 38,
     borderRadius: 8,
     marginRight: 10,
+    backgroundColor: '#F1F5F9',
   },
   itemThumbPlaceholder: {
     width: 38,
     height: 38,
     borderRadius: 8,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#EFF6FF',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#DBEAFE',
   },
   headerInfo: {
     flex: 1,
@@ -306,29 +304,32 @@ const styles = StyleSheet.create({
   otherUserName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: '#0F172A',
   },
   headerItemTitle: {
     fontSize: 12,
-    color: '#38BDF8',
+    color: '#2563EB',
     marginTop: 1,
+    fontWeight: '500',
   },
   viewItemBtn: {
-    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#EFF6FF',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#DBEAFE',
   },
   viewItemText: {
-    color: '#94A3B8',
+    color: '#2563EB',
     fontSize: 12,
     fontWeight: '600',
   },
   messagesList: {
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 14,
     flexGrow: 1,
   },
   centerContainer: {
@@ -337,12 +338,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 12,
-    color: '#94A3B8',
+    marginTop: 10,
+    color: '#64748B',
   },
   messageRow: {
     flexDirection: 'row',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   myMessageRow: {
     justifyContent: 'flex-end',
@@ -352,20 +353,30 @@ const styles = StyleSheet.create({
   },
   bubble: {
     maxWidth: '78%',
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingTop: 10,
+    borderRadius: 14,
+    paddingHorizontal: 13,
+    paddingTop: 9,
     paddingBottom: 6,
   },
   myBubble: {
-    backgroundColor: '#0284C7',
-    borderBottomRightRadius: 4,
+    backgroundColor: '#2563EB',
+    borderBottomRightRadius: 2,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 1,
   },
   otherBubble: {
-    backgroundColor: '#1E293B',
-    borderBottomLeftRadius: 4,
+    backgroundColor: '#FFFFFF',
+    borderBottomLeftRadius: 2,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
   },
   messageText: {
     fontSize: 14,
@@ -375,57 +386,52 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   otherMessageText: {
-    color: '#F8FAFC',
+    color: '#0F172A',
   },
   timeText: {
     fontSize: 10,
-    marginTop: 4,
+    marginTop: 3,
     alignSelf: 'flex-end',
   },
   myTimeText: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'rgba(255, 255, 255, 0.75)',
   },
   otherTimeText: {
-    color: '#64748B',
+    color: '#94A3B8',
   },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    backgroundColor: '#0F172A',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#1E293B',
+    borderTopColor: '#E2E8F0',
     gap: 8,
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
     borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 10,
-    color: '#F8FAFC',
+    paddingHorizontal: 14,
+    paddingTop: 9,
+    paddingBottom: 9,
+    color: '#0F172A',
     fontSize: 14,
     maxHeight: 100,
   },
   sendButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: '#0284C7',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#2563EB',
     justifyContent: 'center',
     alignItems: 'center',
   },
   sendButtonDisabled: {
-    backgroundColor: '#1E293B',
-  },
-  sendButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    marginLeft: 2,
+    backgroundColor: '#E2E8F0',
   },
   emptyContainer: {
     flex: 1,
@@ -434,19 +440,26 @@ const styles = StyleSheet.create({
     padding: 32,
     marginTop: 80,
   },
-  emptyEmoji: {
-    fontSize: 48,
-    marginBottom: 14,
+  emptyIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   emptyTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: '#0F172A',
     marginBottom: 6,
   },
   emptySubtitle: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: '#64748B',
     textAlign: 'center',
     lineHeight: 18,
   },

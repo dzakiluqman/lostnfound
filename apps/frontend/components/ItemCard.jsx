@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export const ItemCard = ({ item, onPress }) => {
   const isLost = item.type === 'lost';
@@ -8,10 +9,10 @@ export const ItemCard = ({ item, onPress }) => {
   return (
     <TouchableOpacity
       style={[styles.card, isResolved && styles.cardResolved]}
-      activeOpacity={0.75}
+      activeOpacity={0.7}
       onPress={onPress}
     >
-      {/* Thumbnail Image if available */}
+      {/* Thumbnail Image / Placeholder */}
       {item.image_url ? (
         <Image
           source={{ uri: item.image_url }}
@@ -20,7 +21,11 @@ export const ItemCard = ({ item, onPress }) => {
         />
       ) : (
         <View style={[styles.thumbnailPlaceholder, isLost ? styles.lostPlaceholder : styles.foundPlaceholder]}>
-          <Text style={styles.placeholderEmoji}>{isLost ? '🔍' : '📦'}</Text>
+          <Ionicons
+            name={isLost ? 'search-outline' : 'cube-outline'}
+            size={28}
+            color={isLost ? '#EF4444' : '#10B981'}
+          />
         </View>
       )}
 
@@ -35,13 +40,19 @@ export const ItemCard = ({ item, onPress }) => {
 
             {isResolved && (
               <View style={styles.resolvedBadge}>
-                <Text style={styles.resolvedBadgeText}>SELESAI</Text>
+                <Ionicons name="checkmark-circle" size={12} color="#059669" style={{ marginRight: 2 }} />
+                <Text style={styles.resolvedBadgeText}>Selesai</Text>
               </View>
             )}
           </View>
 
           <Text style={styles.date}>
-            {item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' }) : 'Hari ini'}
+            {item.created_at
+              ? new Date(item.created_at).toLocaleDateString('id-ID', {
+                  month: 'short',
+                  day: 'numeric',
+                })
+              : 'Hari ini'}
           </Text>
         </View>
 
@@ -56,9 +67,13 @@ export const ItemCard = ({ item, onPress }) => {
         ) : null}
 
         <View style={styles.footerRow}>
-          <Text style={styles.location} numberOfLines={1}>
-            📍 {item.location || 'Area Kampus'}
-          </Text>
+          <View style={styles.locationContainer}>
+            <Ionicons name="location-outline" size={14} color="#64748B" style={styles.locationIcon} />
+            <Text style={styles.location} numberOfLines={1}>
+              {item.location || 'Area Kampus'}
+            </Text>
+          </View>
+
           {item.category ? (
             <View style={styles.categoryPill}>
               <Text style={styles.categoryText}>{item.category}</Text>
@@ -72,39 +87,41 @@ export const ItemCard = ({ item, onPress }) => {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#1E293B',
-    borderRadius: 16,
-    marginVertical: 7,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    marginVertical: 6,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
     overflow: 'hidden',
     flexDirection: 'row',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   cardResolved: {
-    opacity: 0.75,
-    borderColor: '#1E293B',
+    opacity: 0.8,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#CBD5E1',
   },
   thumbnail: {
-    width: 105,
+    width: 100,
     height: '100%',
-    minHeight: 115,
-    backgroundColor: '#0F172A',
+    minHeight: 110,
+    backgroundColor: '#F1F5F9',
   },
   thumbnailPlaceholder: {
-    width: 105,
-    minHeight: 115,
+    width: 100,
+    minHeight: 110,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0F172A',
   },
   lostPlaceholder: {
-    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    backgroundColor: '#FEF2F2',
   },
   foundPlaceholder: {
-    backgroundColor: 'rgba(34, 197, 94, 0.08)',
-  },
-  placeholderEmoji: {
-    fontSize: 32,
+    backgroundColor: '#ECFDF5',
   },
   content: {
     flex: 1,
@@ -126,73 +143,89 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
+    borderWidth: 1,
   },
   lostBadge: {
-    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+    backgroundColor: '#FEE2E2',
+    borderColor: '#FECACA',
   },
   foundBadge: {
-    backgroundColor: 'rgba(34, 197, 94, 0.2)',
+    backgroundColor: '#DCFCE7',
+    borderColor: '#BBF7D0',
   },
   badgeText: {
     fontSize: 10,
     fontWeight: '800',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
   },
   lostBadgeText: {
-    color: '#EF4444',
+    color: '#DC2626',
   },
   foundBadgeText: {
-    color: '#22C55E',
+    color: '#16A34A',
   },
   resolvedBadge: {
-    backgroundColor: 'rgba(148, 163, 184, 0.2)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#D1FAE5',
     paddingHorizontal: 6,
-    paddingVertical: 3,
+    paddingVertical: 2,
     borderRadius: 6,
   },
   resolvedBadgeText: {
-    color: '#94A3B8',
+    color: '#065F46',
     fontSize: 10,
     fontWeight: '700',
   },
   date: {
     fontSize: 11,
     color: '#94A3B8',
+    fontWeight: '500',
   },
   title: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#F8FAFC',
-    marginBottom: 4,
+    color: '#0F172A',
+    marginBottom: 3,
   },
   description: {
-    fontSize: 12,
-    color: '#94A3B8',
-    lineHeight: 17,
+    fontSize: 13,
+    color: '#64748B',
+    lineHeight: 18,
     marginBottom: 8,
   },
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 2,
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
+  },
+  locationIcon: {
+    marginRight: 4,
   },
   location: {
     fontSize: 12,
-    color: '#CBD5E1',
+    color: '#64748B',
     flex: 1,
-    marginRight: 6,
+    fontWeight: '500',
   },
   categoryPill: {
-    backgroundColor: '#0F172A',
-    paddingHorizontal: 6,
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#DBEAFE',
   },
   categoryText: {
-    fontSize: 10,
-    color: '#38BDF8',
+    fontSize: 11,
+    color: '#2563EB',
     fontWeight: '600',
   },
 });

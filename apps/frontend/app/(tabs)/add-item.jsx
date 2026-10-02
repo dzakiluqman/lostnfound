@@ -10,10 +10,10 @@ import {
   Image,
   ActivityIndicator,
   Alert,
-  Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../services/authContext';
 import { uploadImageToSupabase } from '../../services/supabase';
 import { api } from '../../services/api';
@@ -24,7 +24,7 @@ export default function AddItemScreen() {
   const router = useRouter();
   const { user, token, isAuthenticated } = useAuth();
 
-  const [type, setType] = useState('lost'); // 'lost' or 'found'
+  const [type, setType] = useState('lost');
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Elektronik');
   const [location, setLocation] = useState('');
@@ -35,13 +35,12 @@ export default function AddItemScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
 
-  // Image Picker (Camera or Gallery)
   const pickImage = async (fromCamera = false) => {
     try {
       if (fromCamera) {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== 'granted') {
-          Alert.alert('Izin Ditolak', 'Izin kamera diperlukan untuk mengambil foto barang.');
+          Alert.alert('Izin Kamera', 'Izin kamera diperlukan untuk mengambil foto barang.');
           return;
         }
         const result = await ImagePicker.launchCameraAsync({
@@ -59,7 +58,7 @@ export default function AddItemScreen() {
       } else {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
-          Alert.alert('Izin Ditolak', 'Izin galeri diperlukan untuk memilih foto barang.');
+          Alert.alert('Izin Galeri', 'Izin galeri diperlukan untuk memilih foto barang.');
           return;
         }
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -84,17 +83,17 @@ export default function AddItemScreen() {
     if (!isAuthenticated) {
       Alert.alert(
         'Login Diperlukan',
-        'Anda harus login terlebih dahulu untuk membuat laporan barang.',
+        'Anda harus masuk terlebih dahulu untuk membuat laporan barang.',
         [
           { text: 'Batal', style: 'cancel' },
-          { text: 'Login', onPress: () => router.push('/(auth)/login') },
+          { text: 'Masuk', onPress: () => router.push('/(auth)/login') },
         ]
       );
       return;
     }
 
     if (!title.trim() || !location.trim()) {
-      Alert.alert('Peringatan', 'Judul barang dan lokasi wajib diisi.');
+      Alert.alert('Data Belum Lengkap', 'Judul barang dan lokasi wajib diisi.');
       return;
     }
 
@@ -104,20 +103,18 @@ export default function AddItemScreen() {
 
       let uploadedImageUrl = null;
 
-      // 1. Upload photo to Supabase Storage bucket 'item-images' if selected
       if (imageUri) {
-        setStatusMessage('Mengunggah foto ke storage...');
+        setStatusMessage('Mengunggah foto...');
         try {
           uploadedImageUrl = await uploadImageToSupabase({
             uri: imageUri,
             base64: imageBase64,
           });
         } catch (uploadError) {
-          console.warn('Upload image failed, continuing without image:', uploadError.message);
+          console.warn('Upload image note:', uploadError.message);
         }
       }
 
-      // 2. Submit post to backend API / Supabase
       setStatusMessage('Menyimpan laporan...');
       const payload = {
         title: title.trim(),
@@ -132,11 +129,11 @@ export default function AddItemScreen() {
       const created = await api.createItem(payload, token);
 
       Alert.alert(
-        'Sukses',
-        `Laporan barang ${type === 'lost' ? 'hilang' : 'temuan'} berhasil diterbitkan!`,
+        'Laporan Berhasil Diterbitkan',
+        `Laporan barang ${type === 'lost' ? 'hilang' : 'temuan'} Anda telah terdaftar.`,
         [
           {
-            text: 'Lihat Barang',
+            text: 'Lihat Detail',
             onPress: () => {
               if (created?.id) {
                 router.replace(`/item/${created.id}`);
@@ -156,8 +153,7 @@ export default function AddItemScreen() {
       setImageUri(null);
       setImageBase64(null);
     } catch (err) {
-      console.error('Submit error:', err);
-      Alert.alert('Gagal', err.message || 'Gagal menerbitkan laporan barang.');
+      Alert.alert('Gagal Menerbitkan', err.message || 'Terjadi kesalahan sistem.');
     } finally {
       setSubmitting(false);
       setStatusMessage('');
@@ -168,10 +164,12 @@ export default function AddItemScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.authRequiredContainer}>
-          <Text style={styles.authEmoji}>🔒</Text>
+          <View style={styles.lockIconCircle}>
+            <Ionicons name="lock-closed-outline" size={36} color="#2563EB" />
+          </View>
           <Text style={styles.authTitle}>Login Diperlukan</Text>
           <Text style={styles.authSubtitle}>
-            Untuk membuat laporan barang hilang atau barang temuan, silakan masuk ke akun Anda.
+            Untuk membuat laporan barang hilang atau temuan, silakan masuk ke akun kampus Anda.
           </Text>
           <TouchableOpacity
             style={styles.authButton}
@@ -187,16 +185,22 @@ export default function AddItemScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Type Selector (Lost vs Found) */}
-        <Text style={styles.sectionLabel}>Tipe Laporan</Text>
+        {/* Type Selector */}
+        <Text style={styles.sectionLabel}>Pilih Jenis Laporan</Text>
         <View style={styles.typeSelector}>
           <TouchableOpacity
             style={[styles.typeBtn, type === 'lost' && styles.typeBtnLostActive]}
             activeOpacity={0.8}
             onPress={() => setType('lost')}
           >
-            <Text style={[styles.typeBtnText, type === 'lost' && styles.typeBtnTextActive]}>
-              🔍 Saya Kehilangan Barang
+            <Ionicons
+              name="search"
+              size={18}
+              color={type === 'lost' ? '#DC2626' : '#64748B'}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={[styles.typeBtnText, type === 'lost' && styles.typeBtnTextLostActive]}>
+              Kehilangan Barang
             </Text>
           </TouchableOpacity>
 
@@ -205,142 +209,164 @@ export default function AddItemScreen() {
             activeOpacity={0.8}
             onPress={() => setType('found')}
           >
-            <Text style={[styles.typeBtnText, type === 'found' && styles.typeBtnTextActive]}>
-              📦 Saya Menemukan Barang
+            <Ionicons
+              name="cube"
+              size={18}
+              color={type === 'found' ? '#16A34A' : '#64748B'}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={[styles.typeBtnText, type === 'found' && styles.typeBtnTextFoundActive]}>
+              Menemukan Barang
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Image Picker */}
-        <Text style={styles.sectionLabel}>Foto Barang (Opsional)</Text>
-        {imageUri ? (
-          <View style={styles.imagePreviewContainer}>
-            <Image source={{ uri: imageUri }} style={styles.imagePreview} />
-            <TouchableOpacity
-              style={styles.removeImageBtn}
-              onPress={() => {
-                setImageUri(null);
-                setImageBase64(null);
-              }}
-            >
-              <Text style={styles.removeImageText}>✕ Hapus Foto</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.imageActionRow}>
-            <TouchableOpacity
-              style={styles.imagePickerBtn}
-              onPress={() => pickImage(false)}
-            >
-              <Text style={styles.pickerEmoji}>🖼️</Text>
-              <Text style={styles.pickerLabel}>Pilih dari Galeri</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.imagePickerBtn}
-              onPress={() => pickImage(true)}
-            >
-              <Text style={styles.pickerEmoji}>📷</Text>
-              <Text style={styles.pickerLabel}>Buka Kamera</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Item Title */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Nama / Judul Barang *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="misal: Kunci Motor Vario / Dompet Cokelat"
-            placeholderTextColor="#64748B"
-            value={title}
-            onChangeText={setTitle}
-          />
-        </View>
-
-        {/* Category Selector */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Kategori Barang</Text>
-          <View style={styles.categoryGrid}>
-            {CATEGORIES.map((cat) => (
+        {/* Form Card */}
+        <View style={styles.formCard}>
+          {/* Photo Section */}
+          <Text style={styles.cardHeaderTitle}>Foto Barang (Opsional)</Text>
+          {imageUri ? (
+            <View style={styles.imagePreviewContainer}>
+              <Image source={{ uri: imageUri }} style={styles.imagePreview} />
               <TouchableOpacity
-                key={cat}
-                style={[
-                  styles.categoryOption,
-                  category === cat && styles.categoryOptionActive,
-                ]}
-                onPress={() => setCategory(cat)}
+                style={styles.removeImageBtn}
+                onPress={() => {
+                  setImageUri(null);
+                  setImageBase64(null);
+                }}
               >
-                <Text
-                  style={[
-                    styles.categoryOptionText,
-                    category === cat && styles.categoryOptionTextActive,
-                  ]}
-                >
-                  {cat}
-                </Text>
+                <Ionicons name="trash-outline" size={16} color="#DC2626" style={{ marginRight: 6 }} />
+                <Text style={styles.removeImageText}>Hapus Foto</Text>
               </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Location */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Lokasi Terakhir / Ditemukan *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="misal: Kantin Utama meja 12 / Perpustakaan Lt. 2"
-            placeholderTextColor="#64748B"
-            value={location}
-            onChangeText={setLocation}
-          />
-        </View>
-
-        {/* Description */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Deskripsi & Ciri-Ciri Barang</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Jelaskan ciri khusus, warna, stiker, atau detail lain..."
-            placeholderTextColor="#64748B"
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-            value={description}
-            onChangeText={setDescription}
-          />
-        </View>
-
-        {/* Contact Info */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Kontak yang Dapat Dihubungi</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Nomor WhatsApp / Line ID"
-            placeholderTextColor="#64748B"
-            value={contactInfo}
-            onChangeText={setContactInfo}
-          />
-        </View>
-
-        {/* Submit Button */}
-        <TouchableOpacity
-          style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
-          activeOpacity={0.8}
-          onPress={handleSubmit}
-          disabled={submitting}
-        >
-          {submitting ? (
-            <View style={styles.submittingContent}>
-              <ActivityIndicator color="#FFFFFF" size="small" />
-              <Text style={styles.submittingText}>{statusMessage || 'Memproses...'}</Text>
             </View>
           ) : (
-            <Text style={styles.submitButtonText}>
-              📢 Terbitkan Laporan {type === 'lost' ? 'Hilang' : 'Temuan'}
-            </Text>
+            <View style={styles.imageActionRow}>
+              <TouchableOpacity
+                style={styles.imagePickerBtn}
+                onPress={() => pickImage(false)}
+              >
+                <Ionicons name="images-outline" size={24} color="#2563EB" style={{ marginBottom: 6 }} />
+                <Text style={styles.pickerLabel}>Pilih dari Galeri</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.imagePickerBtn}
+                onPress={() => pickImage(true)}
+              >
+                <Ionicons name="camera-outline" size={24} color="#2563EB" style={{ marginBottom: 6 }} />
+                <Text style={styles.pickerLabel}>Buka Kamera</Text>
+              </TouchableOpacity>
+            </View>
           )}
-        </TouchableOpacity>
+
+          {/* Title */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Nama / Judul Barang *</Text>
+            <View style={styles.inputWrapper}>
+              <Ionicons name="pricetag-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="misal: Kunci Motor Honda Vario / KTM"
+                placeholderTextColor="#94A3B8"
+                value={title}
+                onChangeText={setTitle}
+              />
+            </View>
+          </View>
+
+          {/* Category */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Kategori</Text>
+            <View style={styles.categoryGrid}>
+              {CATEGORIES.map((cat) => (
+                <TouchableOpacity
+                  key={cat}
+                  style={[
+                    styles.categoryOption,
+                    category === cat && styles.categoryOptionActive,
+                  ]}
+                  onPress={() => setCategory(cat)}
+                >
+                  <Text
+                    style={[
+                      styles.categoryOptionText,
+                      category === cat && styles.categoryOptionTextActive,
+                    ]}
+                  >
+                    {cat}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Location */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Lokasi Kejadian / Temuan *</Text>
+            <View style={styles.inputWrapper}>
+              <Ionicons name="location-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="misal: Gedung Kuliah Bersama Lt. 3 / Kantin"
+                placeholderTextColor="#94A3B8"
+                value={location}
+                onChangeText={setLocation}
+              />
+            </View>
+          </View>
+
+          {/* Description */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Deskripsi & Ciri-Ciri Khusus</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="Sebutkan warna, stiker khusus, gantungan kunci, atau detail penting lainnya..."
+              placeholderTextColor="#94A3B8"
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              value={description}
+              onChangeText={setDescription}
+            />
+          </View>
+
+          {/* Contact */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Kontak yang Dapat Dihubungi</Text>
+            <View style={styles.inputWrapper}>
+              <Ionicons name="call-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Nomor WhatsApp / ID Telegram"
+                placeholderTextColor="#94A3B8"
+                value={contactInfo}
+                onChangeText={setContactInfo}
+              />
+            </View>
+          </View>
+
+          {/* Submit */}
+          <TouchableOpacity
+            style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+            activeOpacity={0.8}
+            onPress={handleSubmit}
+            disabled={submitting}
+          >
+            {submitting ? (
+              <View style={styles.submittingContent}>
+                <ActivityIndicator color="#FFFFFF" size="small" />
+                <Text style={styles.submittingText}>{statusMessage || 'Menyimpan...'}</Text>
+              </View>
+            ) : (
+              <View style={styles.submittingContent}>
+                <Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" />
+                <Text style={styles.submitButtonText}>
+                  Terbitkan Laporan {type === 'lost' ? 'Kehilangan' : 'Temuan'}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -349,94 +375,115 @@ export default function AddItemScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#F8FAFC',
   },
   scrollContent: {
-    padding: 20,
+    padding: 16,
     paddingBottom: 40,
   },
   sectionLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#E2E8F0',
-    marginBottom: 8,
+    color: '#0F172A',
+    marginBottom: 10,
   },
   typeSelector: {
     flexDirection: 'row',
     gap: 10,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   typeBtn: {
     flex: 1,
+    flexDirection: 'row',
     paddingVertical: 12,
-    paddingHorizontal: 8,
-    backgroundColor: '#1E293B',
+    paddingHorizontal: 10,
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   typeBtnLostActive: {
-    backgroundColor: 'rgba(239, 68, 68, 0.2)',
-    borderColor: '#EF4444',
+    backgroundColor: '#FEF2F2',
+    borderColor: '#F87171',
   },
   typeBtnFoundActive: {
-    backgroundColor: 'rgba(34, 197, 94, 0.2)',
-    borderColor: '#22C55E',
+    backgroundColor: '#ECFDF5',
+    borderColor: '#34D399',
   },
   typeBtnText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
-    color: '#94A3B8',
-    textAlign: 'center',
+    color: '#64748B',
   },
-  typeBtnTextActive: {
-    color: '#F8FAFC',
+  typeBtnTextLostActive: {
+    color: '#DC2626',
     fontWeight: '700',
+  },
+  typeBtnTextFoundActive: {
+    color: '#16A34A',
+    fontWeight: '700',
+  },
+  formCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  cardHeaderTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#334155',
+    marginBottom: 8,
   },
   imageActionRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 20,
+    marginBottom: 18,
   },
   imagePickerBtn: {
     flex: 1,
-    backgroundColor: '#1E293B',
-    borderRadius: 14,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
     paddingVertical: 18,
     alignItems: 'center',
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: '#475569',
-  },
-  pickerEmoji: {
-    fontSize: 26,
-    marginBottom: 6,
+    borderColor: '#CBD5E1',
   },
   pickerLabel: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: '#64748B',
     fontWeight: '600',
   },
   imagePreviewContainer: {
-    marginBottom: 20,
-    borderRadius: 14,
+    marginBottom: 18,
+    borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: '#1E293B',
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
   },
   imagePreview: {
     width: '100%',
-    height: 190,
+    height: 180,
   },
   removeImageBtn: {
-    paddingVertical: 8,
-    backgroundColor: '#1E293B',
+    flexDirection: 'row',
+    paddingVertical: 10,
+    backgroundColor: '#FEF2F2',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   removeImageText: {
-    color: '#EF4444',
+    color: '#DC2626',
     fontSize: 13,
     fontWeight: '600',
   },
@@ -446,21 +493,35 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#E2E8F0',
+    color: '#334155',
     marginBottom: 6,
   },
-  input: {
-    backgroundColor: '#1E293B',
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 12,
-    paddingHorizontal: 14,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+  },
+  inputIcon: {
+    marginRight: 8,
+  },
+  input: {
+    flex: 1,
     paddingVertical: 12,
-    color: '#F8FAFC',
+    color: '#0F172A',
     fontSize: 14,
   },
   textArea: {
-    minHeight: 85,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    minHeight: 80,
   },
   categoryGrid: {
     flexDirection: 'row',
@@ -468,20 +529,20 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   categoryOption: {
-    backgroundColor: '#1E293B',
-    borderRadius: 10,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 7,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
   },
   categoryOptionActive: {
-    backgroundColor: '#0284C7',
-    borderColor: '#38BDF8',
+    backgroundColor: '#2563EB',
+    borderColor: '#2563EB',
   },
   categoryOptionText: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: '#64748B',
     fontWeight: '500',
   },
   categoryOptionTextActive: {
@@ -489,29 +550,29 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   submitButton: {
-    backgroundColor: '#0284C7',
-    borderRadius: 14,
-    paddingVertical: 16,
+    backgroundColor: '#2563EB',
+    borderRadius: 12,
+    paddingVertical: 15,
     alignItems: 'center',
-    marginTop: 10,
-    shadowColor: '#0284C7',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    marginTop: 8,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
   submitButtonDisabled: {
     opacity: 0.7,
-  },
-  submitButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
   },
   submittingContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
   },
   submittingText: {
     color: '#FFFFFF',
@@ -524,28 +585,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 32,
   },
-  authEmoji: {
-    fontSize: 48,
+  lockIconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#EFF6FF',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
   },
   authTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#F8FAFC',
+    color: '#0F172A',
     marginBottom: 8,
   },
   authSubtitle: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: '#64748B',
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 24,
   },
   authButton: {
-    backgroundColor: '#0284C7',
+    backgroundColor: '#2563EB',
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 10,
   },
   authButtonText: {
     color: '#FFFFFF',

@@ -44,7 +44,7 @@ const chatController = {
         });
       }
 
-      // Check if room already exists
+      // Check if room already exists for this item
       const { data: existingRooms, error: searchError } = await supabaseAdmin
         .from('chat_rooms')
         .select(`
@@ -57,26 +57,30 @@ const chatController = {
           user1:user1_id (id, full_name, avatar_url),
           user2:user2_id (id, full_name, avatar_url)
         `)
-        .eq('item_id', item_id)
-        .or(
-          `and(user1_id.eq.${current_user_id},user2_id.eq.${owner_id}),and(user1_id.eq.${owner_id},user2_id.eq.${current_user_id})`
-        );
+        .eq('item_id', item_id);
 
       if (searchError) {
         console.error('[Chat Room Search Error]:', searchError.message);
       }
 
       if (existingRooms && existingRooms.length > 0) {
-        const room = existingRooms[0];
-        const otherUser = room.user1_id === current_user_id ? room.user2 : room.user1;
-        return res.status(200).json({
-          success: true,
-          message: 'Ruang chat ditemukan.',
-          room: {
-            ...room,
-            other_user: otherUser,
-          },
-        });
+        const found = existingRooms.find(
+          (r) =>
+            (r.user1_id === current_user_id && r.user2_id === owner_id) ||
+            (r.user1_id === owner_id && r.user2_id === current_user_id)
+        );
+
+        if (found) {
+          const otherUser = found.user1_id === current_user_id ? found.user2 : found.user1;
+          return res.status(200).json({
+            success: true,
+            message: 'Ruang chat ditemukan.',
+            room: {
+              ...found,
+              other_user: otherUser,
+            },
+          });
+        }
       }
 
       // Create new chat room
