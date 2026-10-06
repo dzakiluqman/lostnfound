@@ -3,7 +3,7 @@ import { supabase } from './supabase';
 const BACKEND_URL =
   process.env.EXPO_PUBLIC_BACKEND_URL ||
   process.env.EXPO_PUBLIC_API_URL ||
-  'http://localhost:5000/api';
+  'https://lostnfound-api.vercel.app/api';
 
 /**
  * Generic fetch wrapper with auth header
