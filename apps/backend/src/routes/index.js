@@ -9,7 +9,7 @@ const chatRoutes = require('./chat');
 router.get('/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
-    message: 'Lost & Found Campus Backend API is running smoothly',
+    message: 'Lost & Found API Running',
     timestamp: new Date().toISOString(),
   });
 });

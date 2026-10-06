@@ -21,6 +21,14 @@ export default function RootLayout() {
           },
         }}
       >
+        {/* Entry redirection */}
+        <Stack.Screen
+          name="index"
+          options={{
+            headerShown: false,
+          }}
+        />
+
         {/* Main Tab Navigator */}
         <Stack.Screen
           name="(tabs)"

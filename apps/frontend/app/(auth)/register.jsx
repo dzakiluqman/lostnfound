@@ -56,32 +56,22 @@ export default function RegisterScreen() {
 
     if (res.success) {
       if (res.autoLogin) {
-        setSuccessMessage('Pendaftaran berhasil! Mengalihkan...');
+        setSuccessMessage('Pendaftaran berhasil! Mengalihkan ke beranda...');
         setTimeout(() => {
           router.replace('/(tabs)');
-        }, 800);
+        }, 1000);
       } else {
-        // If manual login or confirmation required
-        Alert.alert(
-          'Registrasi Berhasil',
-          'Akun Anda berhasil didaftarkan. Silakan masuk dengan email dan kata sandi Anda.',
-          [
-            {
-              text: 'Masuk Sekarang',
-              onPress: () => {
-                router.replace({
-                  pathname: '/(auth)/login',
-                  params: { email: email.trim(), registered: 'true' },
-                });
-              },
-            },
-          ]
-        );
+        setSuccessMessage('Akun Anda berhasil didaftarkan! Mengalihkan ke halaman masuk...');
+        setTimeout(() => {
+          router.replace({
+            pathname: '/(auth)/login',
+            params: { email: email.trim(), registered: 'true' },
+          });
+        }, 1200);
       }
     } else {
       const errText = res.error || 'Pendaftaran gagal. Periksa kembali data Anda.';
       setErrorMessage(errText);
-      Alert.alert('Pendaftaran Gagal', errText);
     }
   };
 
@@ -92,11 +82,11 @@ export default function RegisterScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Header */}
+          {/* Header with Brand Logo */}
           <View style={styles.header}>
             <Image
-              source={require('../../assets/images/icon.png')}
-              style={styles.logoIcon}
+              source={require('../../assets/images/logo.png')}
+              style={styles.brandLogo}
               resizeMode="contain"
             />
             <Text style={styles.title}>Buat Akun Baru</Text>
@@ -264,14 +254,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
   },
-  logoIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
-    marginBottom: 12,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+  brandLogo: {
+    width: 220,
+    height: 52,
+    marginBottom: 14,
   },
   title: {
     fontSize: 22,
@@ -289,15 +275,15 @@ const styles = StyleSheet.create({
   },
   formCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: 12,
     padding: 22,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   errorBanner: {
     flexDirection: 'row',

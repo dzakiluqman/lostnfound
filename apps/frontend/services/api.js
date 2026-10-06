@@ -75,7 +75,6 @@ export const api = {
           type,
           location,
           image_url,
-          contact_info,
           status,
           created_at,
           profiles:user_id(id, full_name, phone_number, avatar_url)
@@ -94,7 +93,10 @@ export const api = {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+      return (data || []).map((item) => ({
+        ...item,
+        contact_info: item.profiles?.phone_number || '',
+      }));
     }
   },
 
@@ -114,7 +116,6 @@ export const api = {
           type,
           location,
           image_url,
-          contact_info,
           status,
           created_at,
           profiles:user_id(id, full_name, phone_number, avatar_url)
@@ -122,7 +123,10 @@ export const api = {
         .eq('id', id)
         .single();
       if (error) throw error;
-      return data;
+      return {
+        ...data,
+        contact_info: data?.profiles?.phone_number || '',
+      };
     }
   },
 
@@ -140,13 +144,20 @@ export const api = {
     } catch (err) {
       console.warn('[API Fallback] Inserting item directly to Supabase:', err.message);
       const { data: { user } } = await supabase.auth.getUser();
+      const { contact_info, ...cleanPayload } = payload;
       const { data, error } = await supabase
         .from('items')
-        .insert([{ ...payload, user_id: user.id }])
+        .insert([{ ...cleanPayload, user_id: user.id }])
         .select()
         .single();
       if (error) throw error;
-      return data;
+      if (contact_info) {
+        await supabase.from('profiles').update({ phone_number: contact_info }).eq('id', user.id);
+      }
+      return {
+        ...data,
+        contact_info: contact_info || '',
+      };
     }
   },
 
@@ -197,20 +208,22 @@ export const api = {
         .select(`
           id,
           item_id,
-          user1_id,
-          user2_id,
+          inquirer_id,
+          owner_id,
           created_at,
           items:item_id(id, title, image_url, type, status, location),
-          user1:user1_id(id, full_name, phone_number, avatar_url),
-          user2:user2_id(id, full_name, phone_number, avatar_url)
+          inquirer:inquirer_id(id, full_name, phone_number, avatar_url),
+          owner:owner_id(id, full_name, phone_number, avatar_url)
         `)
-        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-        .order('updated_at', { ascending: false });
+        .or(`inquirer_id.eq.${user.id},owner_id.eq.${user.id}`)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       return (data || []).map((room) => ({
         ...room,
-        other_user: room.user1_id === user.id ? room.user2 : room.user1,
+        user1_id: room.inquirer_id,
+        user2_id: room.owner_id,
+        other_user: room.inquirer_id === user.id ? room.owner : room.inquirer,
         item: room.items,
       }));
     }
@@ -234,26 +247,58 @@ export const api = {
       // Check existing rooms for this item
       const { data: existingList } = await supabase
         .from('chat_rooms')
-        .select('id, item_id, user1_id, user2_id')
+        .select(`
+          id,
+          item_id,
+          inquirer_id,
+          owner_id,
+          created_at,
+          items:item_id(id, title, image_url, type, status),
+          inquirer:inquirer_id(id, full_name, avatar_url),
+          owner:owner_id(id, full_name, avatar_url)
+        `)
         .eq('item_id', itemId);
 
       if (existingList && existingList.length > 0) {
         const found = existingList.find(
           (r) =>
-            (r.user1_id === user.id && r.user2_id === targetUserId) ||
-            (r.user1_id === targetUserId && r.user2_id === user.id)
+            (r.inquirer_id === user.id && r.owner_id === targetUserId) ||
+            (r.inquirer_id === targetUserId && r.owner_id === user.id)
         );
-        if (found) return found;
+        if (found) {
+          const otherUser = found.inquirer_id === user.id ? found.owner : found.inquirer;
+          return {
+            ...found,
+            user1_id: found.inquirer_id,
+            user2_id: found.owner_id,
+            other_user: otherUser,
+          };
+        }
       }
 
       const { data: newRoom, error } = await supabase
         .from('chat_rooms')
-        .insert([{ item_id: itemId, user1_id: user.id, user2_id: targetUserId }])
-        .select()
+        .insert([{ item_id: itemId, inquirer_id: user.id, owner_id: targetUserId, created_at: new Date().toISOString() }])
+        .select(`
+          id,
+          item_id,
+          inquirer_id,
+          owner_id,
+          created_at,
+          items:item_id(id, title, image_url, type, status),
+          inquirer:inquirer_id(id, full_name, avatar_url),
+          owner:owner_id(id, full_name, avatar_url)
+        `)
         .single();
 
       if (error) throw error;
-      return newRoom;
+      const otherUser = newRoom.inquirer_id === user.id ? newRoom.owner : newRoom.inquirer;
+      return {
+        ...newRoom,
+        user1_id: newRoom.inquirer_id,
+        user2_id: newRoom.owner_id,
+        other_user: otherUser,
+      };
     }
   },
 

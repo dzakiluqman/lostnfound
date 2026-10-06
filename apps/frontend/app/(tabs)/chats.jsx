@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   roomCard: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 12,
     padding: 14,
     marginBottom: 8,
     borderWidth: 1,

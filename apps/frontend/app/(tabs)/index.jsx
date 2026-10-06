@@ -154,11 +154,20 @@ export default function FeedScreen() {
         </ScrollView>
       </View>
 
-      {/* Item List */}
+      {/* Item List with Skeleton Loader */}
       {loading && !refreshing ? (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#2563EB" />
-          <Text style={styles.loadingText}>Memuat daftar barang...</Text>
+        <View style={styles.skeletonContainer}>
+          {[1, 2, 3].map((key) => (
+            <View key={key} style={styles.skeletonCard}>
+              <View style={styles.skeletonThumb} />
+              <View style={styles.skeletonContent}>
+                <View style={styles.skeletonBadge} />
+                <View style={styles.skeletonLineLong} />
+                <View style={styles.skeletonLineShort} />
+              </View>
+            </View>
+          ))}
+          <ActivityIndicator size="small" color="#2563EB" style={{ marginTop: 8 }} />
         </View>
       ) : (
         <FlatList
@@ -339,6 +348,48 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontSize: 13,
     fontWeight: '500',
+  },
+  skeletonContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  skeletonCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginVertical: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+    flexDirection: 'row',
+    height: 110,
+  },
+  skeletonThumb: {
+    width: 100,
+    height: '100%',
+    backgroundColor: '#F1F5F9',
+  },
+  skeletonContent: {
+    flex: 1,
+    padding: 12,
+    justifyContent: 'space-around',
+  },
+  skeletonBadge: {
+    width: 70,
+    height: 18,
+    borderRadius: 6,
+    backgroundColor: '#F1F5F9',
+  },
+  skeletonLineLong: {
+    width: '90%',
+    height: 14,
+    borderRadius: 4,
+    backgroundColor: '#F1F5F9',
+  },
+  skeletonLineShort: {
+    width: '60%',
+    height: 12,
+    borderRadius: 4,
+    backgroundColor: '#F1F5F9',
   },
   emptyContainer: {
     alignItems: 'center',

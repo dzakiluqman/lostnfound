@@ -23,7 +23,6 @@ const itemsController = {
           type,
           location,
           image_url,
-          contact_info,
           status,
           created_at,
           updated_at,
@@ -73,11 +72,16 @@ const itemsController = {
         });
       }
 
+      const formattedData = (data || []).map((item) => ({
+        ...item,
+        contact_info: item.profiles?.phone_number || '',
+      }));
+
       return res.status(200).json({
         success: true,
-        count: data?.length || 0,
+        count: formattedData.length,
         page: parseInt(page, 10),
-        data: data || [],
+        data: formattedData,
       });
     } catch (err) {
       next(err);
@@ -103,7 +107,6 @@ const itemsController = {
           type,
           location,
           image_url,
-          contact_info,
           status,
           created_at,
           updated_at,
@@ -127,7 +130,10 @@ const itemsController = {
 
       return res.status(200).json({
         success: true,
-        data,
+        data: {
+          ...data,
+          contact_info: data.profiles?.phone_number || '',
+        },
       });
     } catch (err) {
       next(err);
@@ -164,11 +170,21 @@ const itemsController = {
         type,
         location: location.trim(),
         image_url: image_url || null,
-        contact_info: contact_info || req.profile?.phone_number || '',
         status: 'active',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
+
+      if (contact_info && contact_info.trim() && !req.profile?.phone_number) {
+        try {
+          await supabaseAdmin
+            .from('profiles')
+            .update({ phone_number: contact_info.trim() })
+            .eq('id', req.user.id);
+        } catch (profileErr) {
+          console.warn('Update profile phone note:', profileErr.message);
+        }
+      }
 
       const { data, error } = await supabaseAdmin
         .from('items')
@@ -182,7 +198,6 @@ const itemsController = {
           type,
           location,
           image_url,
-          contact_info,
           status,
           created_at,
           profiles:user_id (
@@ -205,7 +220,10 @@ const itemsController = {
       return res.status(201).json({
         success: true,
         message: 'Laporan barang berhasil diterbitkan.',
-        data,
+        data: {
+          ...data,
+          contact_info: contact_info || data.profiles?.phone_number || '',
+        },
       });
     } catch (err) {
       next(err);

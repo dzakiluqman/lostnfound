@@ -25,7 +25,18 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [successNotice, setSuccessNotice] = useState(params.registered ? 'Registrasi berhasil! Silakan masuk dengan akun Anda.' : '');
+  const [successNotice, setSuccessNotice] = useState(
+    params.registered ? 'Registrasi berhasil! Silakan masuk dengan kata sandi Anda.' : ''
+  );
+
+  React.useEffect(() => {
+    if (params.email) {
+      setEmail(String(params.email));
+    }
+    if (params.registered) {
+      setSuccessNotice('Registrasi berhasil! Silakan masuk dengan kata sandi Anda.');
+    }
+  }, [params.email, params.registered]);
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -59,8 +70,8 @@ export default function LoginScreen() {
           {/* Brand Header */}
           <View style={styles.header}>
             <Image
-              source={require('../../assets/images/icon.png')}
-              style={styles.logoIcon}
+              source={require('../../assets/images/logo.png')}
+              style={styles.brandLogo}
               resizeMode="contain"
             />
             <Text style={styles.title}>Selamat Datang</Text>
@@ -194,14 +205,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 28,
   },
-  logoIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 18,
+  brandLogo: {
+    width: 230,
+    height: 56,
     marginBottom: 16,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   title: {
     fontSize: 24,
@@ -219,15 +226,15 @@ const styles = StyleSheet.create({
   },
   formCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: 12,
     padding: 24,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   successBanner: {
     flexDirection: 'row',

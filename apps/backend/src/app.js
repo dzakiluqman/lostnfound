@@ -20,10 +20,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Root route
 app.get('/', (req, res) => {
-  res.json({
-    app: 'Lost & Found Campus API',
-    version: '1.0.0',
-    documentation: '/api/health',
+  res.status(200).json({
+    status: 'ok',
+    message: 'Lost & Found API Running',
   });
 });
 
@@ -35,14 +34,9 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // Start server
-if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
-    console.log(`=========================================`);
-    console.log(`🚀 Lost & Found API Server`);
-    console.log(`📡 Running on: http://localhost:${PORT}`);
-    console.log(`⚡ Supabase Client initialized`);
-    console.log(`=========================================`);
-  });
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
 
 module.exports = app;

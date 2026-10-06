@@ -117,8 +117,13 @@ export default function ProfileScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.authPromptContainer}>
+          <Image
+            source={require('../../assets/images/logo.png')}
+            style={styles.unauthLogo}
+            resizeMode="contain"
+          />
           <View style={styles.authIconCircle}>
-            <Ionicons name="person-outline" size={40} color="#2563EB" />
+            <Ionicons name="person-outline" size={36} color="#2563EB" />
           </View>
           <Text style={styles.promptTitle}>Profil Pengguna</Text>
           <Text style={styles.promptSubtitle}>
@@ -151,6 +156,15 @@ export default function ProfileScreen() {
           />
         }
       >
+        {/* Brand Banner */}
+        <View style={styles.brandContainer}>
+          <Image
+            source={require('../../assets/images/logo.png')}
+            style={styles.profileLogo}
+            resizeMode="contain"
+          />
+        </View>
+
         {/* User Profile Card */}
         <View style={styles.profileCard}>
           <View style={styles.avatarCircle}>
@@ -203,7 +217,8 @@ export default function ProfileScreen() {
               style={styles.addPostBtn}
               onPress={() => router.push('/(tabs)/add-item')}
             >
-              <Text style={styles.addPostBtnText}>+ Buat Laporan Pertama</Text>
+              <Ionicons name="add" size={16} color="#FFFFFF" style={{ marginRight: 4 }} />
+              <Text style={styles.addPostBtnText}>Buat Laporan Pertama</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -316,9 +331,23 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 14,
   },
+  unauthLogo: {
+    width: 200,
+    height: 48,
+    marginBottom: 20,
+  },
+  brandContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingVertical: 4,
+  },
+  profileLogo: {
+    width: 210,
+    height: 48,
+  },
   profileCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 20,
     alignItems: 'center',
     borderWidth: 1,

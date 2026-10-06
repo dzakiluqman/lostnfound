@@ -88,7 +88,7 @@ export const ItemCard = ({ item, onPress }) => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 12,
     marginVertical: 6,
     borderWidth: 1,
     borderColor: '#E2E8F0',

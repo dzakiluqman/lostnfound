@@ -2,6 +2,8 @@ const { supabaseAdmin } = require('../config/supabase');
 
 /**
  * Chat Controller
+ * Mapped to Supabase 'chat_rooms' (id, item_id, inquirer_id, owner_id, created_at)
+ * and 'chat_messages' (id, room_id, sender_id, message, created_at)
  */
 const chatController = {
   /**
@@ -50,12 +52,12 @@ const chatController = {
         .select(`
           id,
           item_id,
-          user1_id,
-          user2_id,
+          inquirer_id,
+          owner_id,
           created_at,
           items:item_id (id, title, image_url, type, status),
-          user1:user1_id (id, full_name, avatar_url),
-          user2:user2_id (id, full_name, avatar_url)
+          inquirer:inquirer_id (id, full_name, avatar_url),
+          owner:owner_id (id, full_name, avatar_url)
         `)
         .eq('item_id', item_id);
 
@@ -66,17 +68,19 @@ const chatController = {
       if (existingRooms && existingRooms.length > 0) {
         const found = existingRooms.find(
           (r) =>
-            (r.user1_id === current_user_id && r.user2_id === owner_id) ||
-            (r.user1_id === owner_id && r.user2_id === current_user_id)
+            (r.inquirer_id === current_user_id && r.owner_id === owner_id) ||
+            (r.inquirer_id === owner_id && r.owner_id === current_user_id)
         );
 
         if (found) {
-          const otherUser = found.user1_id === current_user_id ? found.user2 : found.user1;
+          const otherUser = found.inquirer_id === current_user_id ? found.owner : found.inquirer;
           return res.status(200).json({
             success: true,
             message: 'Ruang chat ditemukan.',
             room: {
               ...found,
+              user1_id: found.inquirer_id,
+              user2_id: found.owner_id,
               other_user: otherUser,
             },
           });
@@ -89,21 +93,20 @@ const chatController = {
         .insert([
           {
             item_id,
-            user1_id: current_user_id,
-            user2_id: owner_id,
+            inquirer_id: current_user_id,
+            owner_id: owner_id,
             created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
           },
         ])
         .select(`
           id,
           item_id,
-          user1_id,
-          user2_id,
+          inquirer_id,
+          owner_id,
           created_at,
           items:item_id (id, title, image_url, type, status),
-          user1:user1_id (id, full_name, avatar_url),
-          user2:user2_id (id, full_name, avatar_url)
+          inquirer:inquirer_id (id, full_name, avatar_url),
+          owner:owner_id (id, full_name, avatar_url)
         `)
         .single();
 
@@ -115,13 +118,15 @@ const chatController = {
         });
       }
 
-      const otherUser = newRoom.user1_id === current_user_id ? newRoom.user2 : newRoom.user1;
+      const otherUser = newRoom.inquirer_id === current_user_id ? newRoom.owner : newRoom.inquirer;
 
       return res.status(201).json({
         success: true,
         message: 'Ruang chat baru berhasil dibuat.',
         room: {
           ...newRoom,
+          user1_id: newRoom.inquirer_id,
+          user2_id: newRoom.owner_id,
           other_user: otherUser,
         },
       });
@@ -143,10 +148,9 @@ const chatController = {
         .select(`
           id,
           item_id,
-          user1_id,
-          user2_id,
+          inquirer_id,
+          owner_id,
           created_at,
-          updated_at,
           items:item_id (
             id,
             title,
@@ -155,21 +159,21 @@ const chatController = {
             status,
             location
           ),
-          user1:user1_id (
+          inquirer:inquirer_id (
             id,
             full_name,
             phone_number,
             avatar_url
           ),
-          user2:user2_id (
+          owner:owner_id (
             id,
             full_name,
             phone_number,
             avatar_url
           )
         `)
-        .or(`user1_id.eq.${current_user_id},user2_id.eq.${current_user_id}`)
-        .order('updated_at', { ascending: false });
+        .or(`inquirer_id.eq.${current_user_id},owner_id.eq.${current_user_id}`)
+        .order('created_at', { ascending: false });
 
       if (error) {
         return res.status(500).json({
@@ -182,7 +186,7 @@ const chatController = {
       // Transform format so other_user and latest message are cleanly accessible
       const formattedRooms = await Promise.all(
         (rooms || []).map(async (room) => {
-          const otherUser = room.user1_id === current_user_id ? room.user2 : room.user1;
+          const otherUser = room.inquirer_id === current_user_id ? room.owner : room.inquirer;
 
           // Fetch last message for each room
           const { data: lastMsg } = await supabaseAdmin
@@ -196,11 +200,15 @@ const chatController = {
           return {
             id: room.id,
             item_id: room.item_id,
+            inquirer_id: room.inquirer_id,
+            owner_id: room.owner_id,
+            user1_id: room.inquirer_id,
+            user2_id: room.owner_id,
             item: room.items,
             other_user: otherUser,
             last_message: lastMsg || null,
             created_at: room.created_at,
-            updated_at: room.updated_at,
+            updated_at: lastMsg?.created_at || room.created_at,
           };
         })
       );
@@ -230,11 +238,11 @@ const chatController = {
         .select(`
           id,
           item_id,
-          user1_id,
-          user2_id,
+          inquirer_id,
+          owner_id,
           items:item_id (id, title, image_url, type, status),
-          user1:user1_id (id, full_name, avatar_url),
-          user2:user2_id (id, full_name, avatar_url)
+          inquirer:inquirer_id (id, full_name, avatar_url),
+          owner:owner_id (id, full_name, avatar_url)
         `)
         .eq('id', roomId)
         .single();
@@ -246,7 +254,7 @@ const chatController = {
         });
       }
 
-      if (room.user1_id !== current_user_id && room.user2_id !== current_user_id) {
+      if (room.inquirer_id !== current_user_id && room.owner_id !== current_user_id) {
         return res.status(403).json({
           success: false,
           message: 'Anda bukan peserta dalam ruang chat ini.',
@@ -279,7 +287,7 @@ const chatController = {
         });
       }
 
-      const otherUser = room.user1_id === current_user_id ? room.user2 : room.user1;
+      const otherUser = room.inquirer_id === current_user_id ? room.owner : room.inquirer;
 
       return res.status(200).json({
         success: true,
@@ -287,6 +295,10 @@ const chatController = {
           id: room.id,
           item: room.items,
           other_user: otherUser,
+          inquirer_id: room.inquirer_id,
+          owner_id: room.owner_id,
+          user1_id: room.inquirer_id,
+          user2_id: room.owner_id,
         },
         count: messages?.length || 0,
         data: messages || [],
@@ -316,7 +328,7 @@ const chatController = {
       // Verify room participation
       const { data: room, error: roomError } = await supabaseAdmin
         .from('chat_rooms')
-        .select('id, user1_id, user2_id')
+        .select('id, inquirer_id, owner_id')
         .eq('id', roomId)
         .single();
 
@@ -327,7 +339,7 @@ const chatController = {
         });
       }
 
-      if (room.user1_id !== current_user_id && room.user2_id !== current_user_id) {
+      if (room.inquirer_id !== current_user_id && room.owner_id !== current_user_id) {
         return res.status(403).json({
           success: false,
           message: 'Anda bukan peserta dalam ruang chat ini.',
@@ -366,12 +378,6 @@ const chatController = {
           error: sendError.message,
         });
       }
-
-      // Update room updated_at
-      await supabaseAdmin
-        .from('chat_rooms')
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', roomId);
 
       return res.status(201).json({
         success: true,
