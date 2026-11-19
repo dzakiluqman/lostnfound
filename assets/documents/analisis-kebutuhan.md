@@ -14,6 +14,17 @@
 
 ---
 
+### TABEL KONTRIBUSI TIM PROYEK
+
+| Nama Anggota | NIM | Peran Tim Proyek | Kontribusi Utama dalam Analisis |
+| :--- | :--- | :--- | :--- |
+| **Dzakii Luqman Faid** | 2410506016 | UI/UX Designer | Formulasi Problem Statement 4 Bagian, Perancangan Alur UX Mobile/Web, Pemetaan Persona Pengguna, dan Penyusunan Wireframe Antarmuka. |
+| **Lu’luatina Zakiyatal Fikri** | 2420506034 | Frontend Web Developer | Elisitasi Kebutuhan Admin Satpam, Perancangan Dashboard Web (React + Vite + Tailwind CSS), Alur Form BAST Digital, dan Matriks Ruang Lingkup. |
+| **Farrel Apriandry Ciu** | 2430506056 | Backend Engineer | Analisis 5 Whys Akar Masalah, Perancangan Draf Endpoint REST API (ElysiaJS/Bun), DDL Neon Serverless PostgreSQL, dan Kebutuhan Non-Fungsional (ISO 25010). |
+| **Nabila Syafiqah Zahran Firlina** | 2430506058 | Mobile Developer | Elisitasi Kebutuhan Civitas Akademika, Pemodelan User Story (React Native), Diagram Use Case & Spesifikasi Detail, serta Matriks Keterlacakan (Traceability Matrix). |
+
+---
+
 ## Daftar Isi
 
 1. [Bab 1: Latar Belakang Masalah](#1-latar-belakang-masalah)
